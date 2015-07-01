@@ -1,0 +1,20 @@
+{
+  "name": "lingvoman",
+  "version": "0.0.1",
+  "description": "simple system to store, serve and redacting of translations in json format",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.13.1",
+    "method-override": "^2.3.3",
+    "express": "^4.13.0",
+    "mongoose": "^4.0.6",
+    "morgan": "^1.6.0",
+    "winston": "^1.0.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Tamango",
+  "license": "MIT"
+}
