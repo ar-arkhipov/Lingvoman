@@ -1,0 +1,28 @@
+<!-- NAVBAR -->
+<nav class="navbar navbar-default" ng-controller="LoginCtrl as loginCtrl">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/" ui-sref="default" tabindex="-1">Lingvoman</a>
+        </div>
+        <!-- navbar form -->
+        <form class="navbar-form" novalidate>
+            <div class="form-group">
+                <!--project input group -->
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Login" ng-model="loginCtrl.user.username" ng-required="true" tabindex="0">
+                </div>
+                <!--locale input group -->
+                <div class="input-group">
+                    <input type="password" class="form-control" placeholder="Password" ng-model="loginCtrl.user.password" ng-required="true">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" ng-click="loginCtrl.login()">Войти</button>
+        </form>
+    </div>
+</nav>
+<!-- GROWLS CONTAINER -->
+<div class="col-md-2" ng-controller="GrowlCtrl as growlCtrl" style="position:fixed; right:0;">
+    <alert ng-repeat="growl in growlCtrl.growls" type="{{growl.type}}" close="growlCtrl.closeGrowl($index)">
+        {{growl.msg}}
+    </alert>
+</div>

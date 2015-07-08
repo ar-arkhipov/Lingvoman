@@ -1,0 +1,23 @@
+<!-- NAVBAR -->
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/" ui-sref="default">Lingvoman</a>
+        </div>
+        <!-- navbar form -->
+        <form class="navbar-form navbar-left">
+            <button type="submit" class="btn btn-warning" ui-sref="uitranslates">UI Переводы</button>
+            <button type="submit" class="btn btn-warning" ui-sref="users" ng-if="applicationCtrl.role == 'admin'">Пользователи</button>
+        </form>
+        <p class="navbar-text pull-right">
+        Здравствуйте, <b>{{applicationCtrl.name}}</b>
+        </p>
+    </div>
+</nav>
+
+<!-- GROWLS CONTAINER -->
+<div class="col-md-2" ng-controller="GrowlCtrl as growlCtrl" style="position:fixed; right:0;">
+    <alert ng-repeat="growl in growlCtrl.growls" type="{{growl.type}}" close="growlCtrl.closeGrowl($index)">
+        {{growl.msg}}
+    </alert>
+</div>

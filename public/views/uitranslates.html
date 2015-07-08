@@ -1,0 +1,141 @@
+<div ng-controller="UiTranslatesCtrl as uiTranslatesCtrl">
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="/" ui-sref="default">Lingvoman</a>
+            </div>
+            <!-- navbar form -->
+            <form class="navbar-form navbar-left" name="uiTranslatesCtrl.gettingForm" novalidate>
+                <div class="form-group">
+                    <!--project input group -->
+                    <div class="input-group">
+                        <div class="input-group-btn">
+                            <!--dropdown button -->
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Проект <span class="caret"></span>
+                            </button>
+                            <!-- dropdawn btn LIST -->
+                            <ul class="dropdown-menu">
+                                <li ng-repeat="project in uiTranslatesCtrl.initList" >
+                                    <a href="#" ng-click="uiTranslatesCtrl.chooseProject(project)">
+                                        {{project.projectAlphaId}} - {{project.projectID}}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Project ID" ng-model="uiTranslatesCtrl.id" ng-required="true">
+                    </div>
+                    <!--locale input group -->
+                    <div class="input-group">
+                        <div class="input-group-btn">
+                            <!--dropdown button -->
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Язык <span class="caret"></span>
+                            </button>
+                            <!-- dropdown btn LIST -->
+                            <ul class="dropdown-menu">
+                                <li ng-repeat="locale in uiTranslatesCtrl.chosen.locales" ng-click="uiTranslatesCtrl.locale = locale">
+                                    <a href="#">
+                                        {{locale}}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Locale" ng-model="uiTranslatesCtrl.locale" ng-required="true">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Открыть</button>
+                <button type="submit" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Создать документ</button>
+            </form>
+
+            <form class="navbar-form pull-right">
+                <button type="submit" class="btn btn-info" ng-click="uiTranslatesCtrl.checkCopies()">Восстановление</button>
+            </form>
+        </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <!-- BACKUP-MENU CONTAINER -->
+    <div class="container col-md-8" ng-if="uiTranslatesCtrl.copiesList.length">
+        <h3>Резервные копии:</h3>
+        <div class="panel panel-default" ng-repeat="copy in uiTranslatesCtrl.copiesList">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{copy.projectAlphaId}} - {{copy.projectID}}</h3>
+            </div>
+            <div class="panel-body">
+                Восстановить -
+                <button type="button" class="btn btn-info" style="margin: 0 4px;" ng-repeat="locale in copy.locales"
+                        ng-click="uiTranslatesCtrl.restore(copy.projectID, locale)">{{locale}}</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="col-md-10">
+        <div class="col-md-6" ng-repeat="item in uiTranslatesCtrl.data track by $index">
+            <form>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">
+                            ID: {{item.projectID}} - {{item.projectAlphaId}} <span class="label label-info" >{{item.locale}}</span>
+                            <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.removeDoc(item)">УДАЛИТЬ</button>
+                        </h3>
+                    </div>
+                    <div class="panel-body">
+                        <button type="button" class="btn btn-success btn-xs" ng-click="uiTranslatesCtrl.changeTranslation(item)">Сохранить</button>
+                        <button type="button" class="btn btn-warning btn-xs" ng-click="uiTranslatesCtrl.makeCopy(item)"
+                                ng-if="uiTranslatesCtrl.data.length < 2">Взять за основу</button>
+                    </div>
+                </div>
+
+                <div ng-repeat="(key, value) in item.translations" class="container-fluid well">
+
+                    <h4>Группа:
+                        <span class="label label-default" >{{key}}</span>
+                        <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.deleteGroup(item.translations, key)"
+                                ng-if="uiTranslatesCtrl.data.length < 2">Удалить группу</button>
+                    </h4>
+
+                    <div class="input-group" ng-repeat="(def, trans) in value" style="margin:10px 0;">
+                        <span class="input-group-addon" id="basic-addon1">{{def}}</span>
+                        <input type="text" class="form-control" placeholder="" aria-describedby="basic-addon1"
+                               value="{{trans}}" ng-model="item.translations[key][def]">
+                <span class="input-group-btn">
+                    <button class="btn btn-default" type="button" ng-click="" ng-if="trans.length > 45">
+                        <span class="glyphicon glyphicon-modal-window"></span>
+                    </button>
+                    <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.deleteField(item.translations, key, def)"
+                            title="удалить поле" ng-if="uiTranslatesCtrl.data.length < 2" tabindex="-1">
+                        <span class="glyphicon glyphicon-remove"></span>
+                    </button>
+                </span>
+                    </div>
+
+                    <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
+                        <input type="text" class="form-control" placeholder="Добавить новое поле в группу" aria-describedby="basic-addon1" ng-model="newField">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="submit" ng-click="uiTranslatesCtrl.addField(item.translations, key, newField); newField=null;"
+                          title="Добавить поле"><span class="glyphicon glyphicon-plus"></span></button>
+                </span>
+                    </div>
+                </div>
+
+                <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
+                    <input type="text" class="form-control" placeholder="Создать группу" aria-describedby="basic-addon1" ng-model="newGroup">
+                <span class="input-group-btn">
+                  <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.addGroup(item.translations, newGroup)"
+                          title="Создать группу"><span class="glyphicon glyphicon-plus"></span></button>
+                </span>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- GROWLS CONTAINER -->
+    <div class="col-md-2" ng-controller="GrowlCtrl as growlCtrl" style="position:fixed; right:0;">
+        <alert ng-repeat="growl in growlCtrl.growls" type="{{growl.type}}" close="growlCtrl.closeGrowl($index)">
+            {{growl.msg}}
+        </alert>
+    </div>
+</div>

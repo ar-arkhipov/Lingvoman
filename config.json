@@ -1,0 +1,7 @@
+{
+  "port" : 8080,
+  "mongo" : {
+    "uri" : "mongodb://localhost/lingvoman"
+  },
+  "jwtSecret" : "jwtsecretkey"
+}

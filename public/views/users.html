@@ -1,0 +1,77 @@
+<!-- NAVBAR -->
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="/" ui-sref="default">Lingvoman</a>
+        </div>
+        <!-- navbar form -->
+        <form class="navbar-form navbar-left" novalidate>
+        </form>
+        <!-- slight fix for proper view of "restore" button -->
+    </div>
+</nav>
+
+<!-- CONTENT -->
+<!-- MAIN CONTAINER -->
+<div ng-controller="UsersCtrl as usersCtrl">
+    <div class="container col-md-5">
+        <h3>Пользователи:</h3>
+        <div class="panel panel-default" ng-repeat="user in usersCtrl.usersList">
+            <div class="panel-heading">
+                <h3 class="panel-title"><b>{{user.username}}</b></h3>
+            </div>
+            <div class="panel-body">
+                <span><b>Имя:</b> {{user.userObj.name}}</span>
+                <span style="margin-left: 20px"><b>Уровень доступа:</b> {{user.userObj.role}}</span>
+                <button type="button" class="btn-xs btn-danger pull-right" style="margin: 0 4px;" ng-click="usersCtrl.deleteUser(user, user.username)">
+                    Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="container col-md-2"></div>
+    <div class="container col-md-3">
+        <h3>Создать пользователя:</h3>
+        <form class="well" role="form" name="usersCtrl.creationForm" novalidate>
+            <div class="form-group">
+                <label for="login">Логин:</label>
+                <input autocomplete="off" type="text" class="form-control" id="login" ng-model="usersCtrl.newUser.username" ng-required="true">
+            </div>
+            <div class="form-group">
+                <label for="pwd">Пароль:</label>
+                <input autocomplete="off" type="password" class="form-control" id="pwd" ng-model="usersCtrl.newUser.password" ng-required="true">
+            </div>
+            <div class="form-group">
+                <label for="name">Реальное имя пользователя:</label>
+                <input autocomplete="off" type="text" class="form-control" id="name" ng-model="usersCtrl.newUser.userObj.name" ng-required="true">
+            </div>
+            <div class="form-group">
+                <label for="name">Уровень доступа:</label>
+                <div class="input-group">
+                    <div class="input-group-btn">
+                        <!--dropdown button -->
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                            Уровень <span class="caret"></span>
+                        </button>
+                        <!-- dropdown btn LIST -->
+                        <ul class="dropdown-menu">
+                            <li ng-repeat="role in usersCtrl.rolesList" >
+                                <a href="#" ng-click="usersCtrl.chooseRole(role)">
+                                    {{role}}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <input type="text" class="form-control" placeholder="" id="role" ng-model="usersCtrl.newUser.userObj.role" ng-required="true" disabled>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" ng-click="usersCtrl.createUser()">Создать</button>
+        </form>
+    </div>
+</div>
+<!-- GROWLS CONTAINER -->
+<div class="col-md-2" ng-controller="GrowlCtrl as growlCtrl" style="position:fixed; right:0;">
+    <alert ng-repeat="growl in growlCtrl.growls" type="{{growl.type}}" close="growlCtrl.closeGrowl($index)">
+        {{growl.msg}}
+    </alert>
+</div>
