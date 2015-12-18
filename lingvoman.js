@@ -5,7 +5,6 @@ var bodyParser = require('body-parser');
 var methodOverride = require('method-override');
 var morgan = require('morgan');
 var path            = require('path');
-var auth = require('./middlewares/auth.js');
 
 var app = express();
 

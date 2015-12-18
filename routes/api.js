@@ -6,18 +6,35 @@ var pwd = require('../middlewares/pwd.js');
 var api = {
     //UI translations
     uiTranslationsGet: function(req, res) {
-        UiTran.findOne({
-                "projectID":req.params.productId,
-                "locale":req.query.lang},
-            {translations:1, _id:0},
-            function(err, doc) {
-                if (doc) {
-                    res.json(doc.toObject().translations);
-                } else {
-                    res.status(404);
-                    res.json({msg: "Document not found. maybe 'lang' param is absent"});
-                }
+        if (req.query.lang) {
+            UiTran.findOne({
+                    "projectID": req.params.projectID,
+                    "locale": req.query.lang
+                },
+                {translations: 1, _id: 0},
+                function (err, doc) {
+                    if (doc && doc.toObject()) {
+                        res.json(doc.toObject().translations);
+                    } else {
+                        res.status(404);
+                        res.json({msg: "Document not found."});
+                    }
+                });
+        } else {
+            UiTran.aggregate([
+                {$match:{projectID:parseInt(req.params.projectID)}},
+                {$group: {
+                    _id: "$projectID",
+                    locales: {$addToSet: "$locale"}
+                }},
+                {$project:{
+                    _id:0,
+                    locales:1
+                }}
+            ]).exec(function(err, data) {
+               res.send(data[0] || []);
             });
+        }
     },
 
     uiTranslationsGetList: function(req, res) {

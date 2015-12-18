@@ -8,7 +8,7 @@ router.post('/login', auth.login);
 // UI TRANSLATIONS PART
 
 // serve translations in json for client (public method)
-router.get('/uitranslate/:productId', api.uiTranslationsGet);
+router.get('/uitranslate/:projectID', api.uiTranslationsGet);
 
 // Private methods:
 
