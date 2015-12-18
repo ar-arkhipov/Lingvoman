@@ -6,7 +6,6 @@
   "dependencies": {
     "body-parser": "^1.13.1",
     "express": "^4.13.0",
-    "forever": "^0.14.2",
     "gulp": "^3.9.0",
     "gulp-concat": "^2.6.0",
     "gulp-ng-annotate": "^1.0.0",
@@ -22,7 +21,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
-    "type": "git"
+    "type": "git",
+    "url": "git+https://github.com/Tamango92/Lingvoman.git"
   },
   "author": "Tamango",
   "license": "MIT"
