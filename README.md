@@ -22,9 +22,10 @@ Response: {token}
 It is used to simply get the user interface translations in definite language in JSON format.
 
 Method: GET.  
-Params: lang - locale definition (for example: "ru")  
+Params: id - numerous id of the project
+        lang - locale definition (for example: "ru")  
 Response: { ... } - translations in json format.  
-QueryExample: /uitranslate?lang=ru
+QueryExample: /uitranslate/32?lang=ru
 
 #UI Translations private methods:
 These methods can be used by authorized users with 'admin' or 'translater' rights.
