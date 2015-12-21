@@ -13,7 +13,7 @@
                         <div class="input-group-btn">
                             <!--dropdown button -->
                             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Проект <span class="caret"></span>
+                                Project <span class="caret"></span>
                             </button>
                             <!-- dropdawn btn LIST -->
                             <ul class="dropdown-menu">
@@ -31,7 +31,7 @@
                         <div class="input-group-btn">
                             <!--dropdown button -->
                             <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Язык <span class="caret"></span>
+                                Language <span class="caret"></span>
                             </button>
                             <!-- dropdown btn LIST -->
                             <ul class="dropdown-menu">
@@ -45,12 +45,12 @@
                         <input type="text" class="form-control" placeholder="Locale" ng-model="uiTranslatesCtrl.locale" ng-required="true">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Открыть</button>
-                <button type="submit" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Создать документ</button>
+                <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
+                <button type="submit" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document</button>
             </form>
 
             <form class="navbar-form pull-right">
-                <button type="submit" class="btn btn-info" ng-click="uiTranslatesCtrl.checkCopies()">Восстановление</button>
+                <button type="submit" class="btn btn-info" ng-click="uiTranslatesCtrl.checkCopies()">Backup</button>
             </form>
         </div>
     </nav>
@@ -58,13 +58,13 @@
     <!-- CONTENT -->
     <!-- BACKUP-MENU CONTAINER -->
     <div class="container col-md-8" ng-if="uiTranslatesCtrl.copiesList.length">
-        <h3>Резервные копии:</h3>
+        <h3>Backup copies:</h3>
         <div class="panel panel-default" ng-repeat="copy in uiTranslatesCtrl.copiesList">
             <div class="panel-heading">
                 <h3 class="panel-title">{{copy.projectAlphaId}} - {{copy.projectID}}</h3>
             </div>
             <div class="panel-body">
-                Восстановить -
+                Recover -
                 <button type="button" class="btn btn-info" style="margin: 0 4px;" ng-repeat="locale in copy.locales"
                         ng-click="uiTranslatesCtrl.restore(copy.projectID, locale)">{{locale}}</button>
             </div>
@@ -80,22 +80,22 @@
                     <div class="panel-heading">
                         <h3 class="panel-title">
                             ID: {{item.projectID}} - {{item.projectAlphaId}} <span class="label label-info" >{{item.locale}}</span>
-                            <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.removeDoc(item)">УДАЛИТЬ</button>
+                            <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.removeDoc(item)">DELETE</button>
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <button type="button" class="btn btn-success btn-xs" ng-click="uiTranslatesCtrl.changeTranslation(item)">Сохранить</button>
+                        <button type="button" class="btn btn-success btn-xs" ng-click="uiTranslatesCtrl.changeTranslation(item)">Save</button>
                         <button type="button" class="btn btn-warning btn-xs" ng-click="uiTranslatesCtrl.makeCopy(item)"
-                                ng-if="uiTranslatesCtrl.data.length < 2">Взять за основу</button>
+                                ng-if="uiTranslatesCtrl.data.length < 2">Take as template</button>
                     </div>
                 </div>
 
                 <div ng-repeat="(key, value) in item.translations" class="container-fluid well">
 
-                    <h4>Группа:
+                    <h4>Group:
                         <span class="label label-default" >{{key}}</span>
                         <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.deleteGroup(item.translations, key)"
-                                ng-if="uiTranslatesCtrl.data.length < 2">Удалить группу</button>
+                                ng-if="uiTranslatesCtrl.data.length < 2">Delete group</button>
                     </h4>
 
                     <div class="input-group" ng-repeat="(def, trans) in value" style="margin:10px 0;">
@@ -107,26 +107,26 @@
                         <span class="glyphicon glyphicon-modal-window"></span>
                     </button>
                     <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.deleteField(item.translations, key, def)"
-                            title="удалить поле" ng-if="uiTranslatesCtrl.data.length < 2" tabindex="-1">
+                            title="Remove field" ng-if="uiTranslatesCtrl.data.length < 2" tabindex="-1">
                         <span class="glyphicon glyphicon-remove"></span>
                     </button>
                 </span>
                     </div>
 
                     <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
-                        <input type="text" class="form-control" placeholder="Добавить новое поле в группу" aria-describedby="basic-addon1" ng-model="newField">
+                        <input type="text" class="form-control" placeholder="Add new field to the group" aria-describedby="basic-addon1" ng-model="newField">
                 <span class="input-group-btn">
                   <button class="btn btn-default" type="submit" ng-click="uiTranslatesCtrl.addField(item.translations, key, newField); newField=null;"
-                          title="Добавить поле"><span class="glyphicon glyphicon-plus"></span></button>
+                          title="Add field"><span class="glyphicon glyphicon-plus"></span></button>
                 </span>
                     </div>
                 </div>
 
                 <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
-                    <input type="text" class="form-control" placeholder="Создать группу" aria-describedby="basic-addon1" ng-model="newGroup">
+                    <input type="text" class="form-control" placeholder="Create group" aria-describedby="basic-addon1" ng-model="newGroup">
                 <span class="input-group-btn">
                   <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.addGroup(item.translations, newGroup)"
-                          title="Создать группу"><span class="glyphicon glyphicon-plus"></span></button>
+                          title="Create group"><span class="glyphicon glyphicon-plus"></span></button>
                 </span>
                 </div>
             </form>

@@ -46,11 +46,11 @@
                         }
                     }
                     if (vm.data.length) {
-                        $rootScope.$broadcast('growl', {type: 'success', msg: 'Переводы получены!'});
+                        $rootScope.$broadcast('growl', {type: 'success', msg: 'Translations received!'});
                     } else {
                         $rootScope.$broadcast('growl', {
                             type: 'danger',
-                            msg: 'Подходящих файлов не найдено. Проверьте данные.'
+                            msg: 'Files not found. Check input data.'
                         });
                     }
                 });
@@ -60,7 +60,7 @@
 
 //save changes
         vm.changeTranslation = function (item) {
-            if (confirm('Вы уверены, что хотите сохранить?')) {
+            if (confirm('Are you sure you want to save?')) {
                 delete item._id;
                 console.log(item);
                 trans.save(item).$promise.then(function (data) {
@@ -68,7 +68,7 @@
                     if (data.ok) {
                         $rootScope.$broadcast('growl', {
                             type: 'success',
-                            msg: 'Документ ' + item.projectAlphaId + ' ' + item.locale + ' сохранен!'
+                            msg: 'Document ' + item.projectAlphaId + ' ' + item.locale + ' saved'
                         });
                         vm.copiesList = [];
                     }
@@ -79,7 +79,7 @@
 //creating a fully new document if such ID is not already used
         vm.makeNew = function () {
             if (vm.gettingForm.$valid) {
-                var alphaId = prompt('Буквенное название проекта', 'project');
+                var alphaId = prompt('Alphabetical name of the project', 'project');
                 if (vm.id && vm.locale && alphaId) {
                     trans.put({
                         "projectID": vm.id,
@@ -89,12 +89,12 @@
                         if (data.status == 400) {
                             $rootScope.$broadcast('growl', {
                                 type: 'danger',
-                                msg: 'Этот проект уже имеет как минимум 1 файл переводов!'
+                                msg: 'This project already has translation file. Use it please.'
                             });
                         } else {
                             $rootScope.$broadcast('growl', {
                                type: 'success',
-                                msg: 'Документ создан'
+                                msg: 'Document created'
                             });
                             vm.getTrans();
                         }
@@ -122,15 +122,15 @@
         };
 // add group
         vm.addGroup = function (obj, newGroup) {
-            if (obj[newGroup.toLowerCase()]) {
+            if (obj[newGroup.toUpperCase()]) {
                 console.error('field already exists!');
             } else {
-                obj[newGroup.toLowerCase()] = {};
+                obj[newGroup.toUpperCase()] = {};
             }
         };
 // creating a local copy of document with new locale, should be saved after being filled in
         vm.makeCopy = function (item) {
-            var newLang = prompt('На какой язык переводим?: ');
+            var newLang = prompt('Please enter the name of locale: ');
             var newItem = (JSON.parse(JSON.stringify(item)));
             if (newLang) {
                 trans.query({'projectID': newItem.projectID, 'locale': newLang}).$promise.then(function (data) {
@@ -139,25 +139,25 @@
                         vm.data.push(newItem);
                         $rootScope.$broadcast('growl', {
                             type: 'warning',
-                            msg: 'Документ создан локально. Не забудьте сохранить изменения!'
+                            msg: "Document created locally! Don't forget to save it."
                         });
                     } else {
-                        $rootScope.$broadcast('growl', {type: 'danger', msg: 'Такой документ уже существует.'});
+                        $rootScope.$broadcast('growl', {type: 'danger', msg: 'Such document already exists.'});
                     }
                 });
             }
         };
 // removing document from the main collection
         vm.removeDoc = function (item) {
-            if (confirm('Вы собираетесь ПОЛНОСТЬЮ удалить файл переводов ' + item.locale + ' для проекта ' + item.projectID + '-' + item.projectAlphaId)) {
+            if (confirm('You are going to TOTALLY DELETE document ' + item.locale + ' of project ' + item.projectID + '-' + item.projectAlphaId)) {
                 trans.delete(item).$promise.then(function (data) {
                     console.log(data);
                     if (data.ok) {
                         var index = vm.data.indexOf(item);
                         vm.data.splice(index, 1);
-                        $rootScope.$broadcast('growl', {type: 'success', msg: 'Документ успешно удален.'});
+                        $rootScope.$broadcast('growl', {type: 'success', msg: 'Document has been deleted'});
                     } else {
-                        $rootScope.$broadcast('growl', {type: 'danger', msg: 'Произошла непредвиденная ошибка.'});
+                        $rootScope.$broadcast('growl', {type: 'danger', msg: 'Unexpected error'});
                     }
                 });
             }
@@ -172,16 +172,16 @@
         };
 // restore definite document from backup collection to main
         vm.restore = function (id, locale) {
-            if (confirm('Вы хотите восстановить/заменить основной документ резервной копией?')) {
+            if (confirm('Are you sure you want to recover/replace the document with backup-copy?')) {
                 restore.save({"projectID": id, "locale": locale}).$promise.then(function (data) {
                     console.log(data);
                     if (data.ok) {
-                        $rootScope.$broadcast('growl', {type: 'success', msg: 'Документ успешно восстановлен!'});
+                        $rootScope.$broadcast('growl', {type: 'success', msg: 'Document recovered succesfuly!'});
                         vm.copiesList = [];
                         vm.id = id; vm.locale=locale;
                         vm.init();
                     } else {
-                        $rootScope.$broadcast('growl', {type: 'danger', msg: 'Произошла непредвиденная ошибка.'});
+                        $rootScope.$broadcast('growl', {type: 'danger', msg: 'Unexpected error.'});
                     }
                 });
             }

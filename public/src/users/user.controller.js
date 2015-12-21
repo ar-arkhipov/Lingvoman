@@ -40,13 +40,13 @@
                     if(data.status != 400)
                     $rootScope.$broadcast('growl', {
                         type: "success",
-                        msg: "Пользователь создан"
+                        msg: "User created"
                     });
                 });
             } else {
                 $rootScope.$broadcast('growl', {
                     type:'danger',
-                    msg:'Форма заполнена не корректно'
+                    msg:'Invalid form'
                 });
             }
         };
@@ -56,7 +56,7 @@
         };
 
         vm.deleteUser = function (user, username) {
-            if (confirm('Вы уверены, что хотите удалить пользователя ' + username + ' ?')) {
+            if (confirm('Are you sure you want to delete user ' + username + ' ?')) {
                 users.delete({username: username}).$promise.then(function (data) {
                     console.log(data);
                     if (data.ok) {
@@ -64,12 +64,12 @@
                         vm.usersList.splice(index, 1);
                         $rootScope.$broadcast('growl', {
                             type: "success",
-                            msg: "Пользователь удален"
+                            msg: "User deleted"
                         });
                     } else {
                         $rootScope.$broadcast(('growl', {
                             type: "danger",
-                            msg: "Не удалось удалить пользователя."
+                            msg: "Unexpected error"
                         }));
                     }
                 });

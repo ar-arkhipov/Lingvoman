@@ -19,7 +19,7 @@
                 if ([400, 401].indexOf(resp.status) !== -1 && resp.data.message) {
                     $rootScope.$broadcast('growl', {type: 'danger', msg: resp.data.message});
                 } else {
-                    $rootScope.$broadcast('growl', {type: 'danger', msg: 'Непредвиденная ошибка'});
+                    $rootScope.$broadcast('growl', {type: 'danger', msg: 'Unexpected error'});
                 }
                 return resp;
             }
