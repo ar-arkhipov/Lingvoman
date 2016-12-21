@@ -1,7 +1,7 @@
 <div class="login-component">
-  <form class="login-form" name="login-form">
-    <input type="text">
-    <input type="password">
-    <button>Login</button>
+  <form class="login-form" name="login-form" (ngSubmit)="f.form.valid && login()" #f="ngForm" novalidate>
+    <input type="text" [(ngModel)]="credentials.username" name="username" required>
+    <input type="password" [(ngModel)]="credentials.password" name="password" required>
+    <button [disabled]="loading" type="submit">Login</button>
   </form>
 </div>

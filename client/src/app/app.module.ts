@@ -2,17 +2,22 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
+import { RouterModule } from "@angular/router";
+
+import { ROUTES } from "./app.route";
 
 import { AppComponent } from './app.component';
-import { RouterModule } from "@angular/router";
-import { ROUTES } from "./app.route";
 import { LoginComponent } from "./login/login.component";
+import { MainComponent } from "./main/main.component";
+
 import { AuthService } from "./services/auth.service";
+import { AuthGuard } from "./guards/auth.guard";
 
 @NgModule({
   declarations: [
     AppComponent,
-    LoginComponent
+    LoginComponent,
+    MainComponent
   ],
   imports: [
     BrowserModule,
@@ -21,7 +26,8 @@ import { AuthService } from "./services/auth.service";
     RouterModule.forRoot(ROUTES)
   ],
   providers: [
-    AuthService
+    AuthService,
+    AuthGuard
   ],
   bootstrap: [AppComponent]
 })

@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+
 import { AuthService } from '../services/auth.service';
+
 
 @Component({
   selector: 'lm-login',
@@ -8,17 +11,23 @@ import { AuthService } from '../services/auth.service';
 })
 
 export class LoginComponent implements OnInit {
-  private userData;
+  public credentials: any = {};
+  public loading: boolean = false;
 
-  constructor(private auth: AuthService) {}
+  constructor(private auth: AuthService, private router: Router) {}
 
   ngOnInit() {
-    this.auth.login({
-      username: 'admin',
-      password: 'password'
-    }).subscribe(
-      data => console.log(data),
-      err => console.log(err)
-    )
+
+  }
+
+  login() {
+    this.loading = true;
+    this.auth.login(this.credentials).subscribe(result => {
+      this.loading = false;
+      this.router.navigate(['/']);
+    }, error => {
+      this.loading = false;
+      console.log(error); //So and what @TODO with that here???
+    });
   }
 }
