@@ -1,4 +1,18 @@
-<h1>Translations list!</h1>
-<div class="row">
-  <div *ngFor="let item of list" class="card-panel col s2 offset-s1">{{item.projectAlphaId}}</div>
+<div class="trans-list">
+  <div class="row">
+    <div class="col s4" *ngFor="let item of list">
+      <div class="card grey lighten-5 hoverable">
+        <div class="card-content teal-text">
+          <span class="card-title">
+            <b>{{item.projectID}}:</b>
+            {{item.projectAlphaId}}
+          </span>
+        </div>
+        <div class="card-action">
+          <a class="waves-effect waves-light btn" *ngFor="let loc of item.locales">{{loc}}</a>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+

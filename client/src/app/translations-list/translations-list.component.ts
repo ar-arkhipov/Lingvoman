@@ -15,12 +15,11 @@ export class TranslationsListComponent implements OnInit {
   constructor(private trans: TransService, private router: Router) {}
 
   ngOnInit() {
-    console.log('List inited');
     this.trans.getList().subscribe(data => {
         this.list = data;
       },
       error => {
-        console.log(error)
+        console.log(error); //@TODO: Error handling
       })
   }
 }
