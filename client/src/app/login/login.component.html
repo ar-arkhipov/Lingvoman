@@ -1,7 +1,16 @@
-<div class="login-component">
-  <form class="login-form" name="login-form" (ngSubmit)="f.form.valid && login()" #f="ngForm" novalidate>
-    <input type="text" [(ngModel)]="credentials.username" name="username" required>
-    <input type="password" [(ngModel)]="credentials.password" name="password" required>
-    <button [disabled]="loading" type="submit">Login</button>
-  </form>
+<div class="login-component row">
+  <div class="col s4 offset-s4">
+    <form class="login-form card-panel grey lighten-5 hoverable" name="login-form" (ngSubmit)="f.form.valid && login()" #f="ngForm" novalidate>
+      <div class="flow-text teal-text center-align">Lingvoman</div>
+      <div class="input-field">
+        <input id="username" type="text" [(ngModel)]="credentials.username" name="username" required>
+        <label for="username">Username</label>
+      </div>
+      <div class="input-field">
+        <input id="password" type="password" [(ngModel)]="credentials.password" name="password" required>
+        <label for="password">Password</label>
+      </div>
+      <button [disabled]="loading" type="submit" class="waves-effect waves-light btn">Login</button>
+    </form>
+  </div>
 </div>

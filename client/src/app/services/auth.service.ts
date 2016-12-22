@@ -9,11 +9,13 @@ const ENDPOINT = 'http://localhost:1337/login';
 export class AuthService {
   private isLogged: boolean = false;
   public token: string;
+  public user: any;
 
   constructor(private http: Http) {
     let userData = JSON.parse(localStorage.getItem('userData'));
     this.isLogged = !!userData;
     this.token = userData && userData.token;
+    this.user = userData && userData.user;
   }
 
   login(credentials: any): Observable<boolean> {
@@ -21,7 +23,8 @@ export class AuthService {
       .post(ENDPOINT, credentials)
       .map((res: Response) => {
         let userData = res.json();
-        this.token = res.json().token;
+        this.token = userData.token;
+        this.user = userData.user;
         this.isLogged = true;
         localStorage.setItem('userData', JSON.stringify(userData));
         return true;

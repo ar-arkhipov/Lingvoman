@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { TransService } from "../services/trans.service";
 
 @Component({
   selector: 'lm-main',
@@ -9,7 +10,7 @@ import { Router } from '@angular/router';
 
 export class MainComponent implements OnInit {
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private trans: TransService) {}
 
   ngOnInit() {}
 }

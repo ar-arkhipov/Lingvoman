@@ -7,19 +7,24 @@ import { RouterModule } from "@angular/router";
 import { MaterializeModule } from 'angular2-materialize';
 
 import { ROUTES } from "./app.route";
+import { AuthGuard } from "./guards/auth.guard";
 
 import { AppComponent } from './app.component';
 import { LoginComponent } from "./login/login.component";
 import { MainComponent } from "./main/main.component";
+import { NavbarComponent } from "./navbar/navbar.component";
+import { TranslationsListComponent } from "./translations-list/translations-list.component";
 
 import { AuthService } from "./services/auth.service";
-import { AuthGuard } from "./guards/auth.guard";
+import { TransService } from "./services/trans.service";
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
-    MainComponent
+    MainComponent,
+    NavbarComponent,
+    TranslationsListComponent
   ],
   imports: [
     BrowserModule,
@@ -30,7 +35,8 @@ import { AuthGuard } from "./guards/auth.guard";
   ],
   providers: [
     AuthService,
-    AuthGuard
+    AuthGuard,
+    TransService
   ],
   bootstrap: [AppComponent]
 })
