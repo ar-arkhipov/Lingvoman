@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { RouterModule } from "@angular/router";
 
+import { MaterializeModule } from 'angular2-materialize';
+
 import { ROUTES } from "./app.route";
 
 import { AppComponent } from './app.component';
@@ -23,7 +25,8 @@ import { AuthGuard } from "./guards/auth.guard";
     BrowserModule,
     FormsModule,
     HttpModule,
-    RouterModule.forRoot(ROUTES)
+    RouterModule.forRoot(ROUTES),
+    MaterializeModule
   ],
   providers: [
     AuthService,
