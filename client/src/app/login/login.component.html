@@ -1,16 +1,18 @@
 <div class="login-component row">
   <div class="col s4 offset-s4">
-    <form class="login-form card-panel grey lighten-5 hoverable" name="login-form" (ngSubmit)="f.form.valid && login()" #f="ngForm" novalidate>
+    <form class="login-form card-panel grey lighten-5" name="login-form" (ngSubmit)="f.form.valid && login()" #f="ngForm" novalidate>
       <div class="flow-text teal-text center-align">Lingvoman</div>
       <div class="input-field">
-        <input id="username" type="text" [(ngModel)]="credentials.username" name="username" required>
-        <label for="username">Username</label>
+        <input id="email" type="text" [(ngModel)]="credentials.email" #email="ngModel" name="email" required email>
+        <label for="email">E-mail</label>
       </div>
       <div class="input-field">
-        <input id="password" type="password" [(ngModel)]="credentials.password" name="password" required>
+        <input id="password" type="password" [(ngModel)]="credentials.password" name="password" #password="ngModel" required [min]="6">
         <label for="password">Password</label>
       </div>
       <button [disabled]="loading" type="submit" class="waves-effect waves-light btn">Login</button>
+      <button routerLink="/signup" [disabled]="loading" type="button" class="waves-effect waves-light btn-flat teal-text">Sign Up</button>
+      <pre *ngIf="email.touched">{{email.errors | json}}</pre>
     </form>
   </div>
 </div>

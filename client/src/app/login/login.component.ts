@@ -22,12 +22,6 @@ export class LoginComponent implements OnInit {
 
   login() {
     this.loading = true;
-    this.auth.login(this.credentials).subscribe(result => {
-      this.loading = false;
-      this.router.navigate(['/']);
-    }, error => {
-      this.loading = false;
-      console.log(error); //So and what @TODO with that here???
-    });
+
   }
 }

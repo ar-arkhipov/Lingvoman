@@ -1,6 +1,19 @@
 /* You can add global styles to this file, and also import other style files */
 @import "../node_modules/materialize-css/dist/css/materialize.css";
 
+
+//extended forms
+form {
+  .input-field.has-error {
+
+    input, input:focus {
+      border-bottom: 1px solid #F44336;
+      box-shadow: 0 1px 0 0 #F44336;
+    }
+
+  }
+}
+
 //helpers
 .pr10 {
   padding-right: 10px;
