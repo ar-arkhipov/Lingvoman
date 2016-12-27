@@ -5,13 +5,13 @@ import { AuthService } from '../services/auth.service';
 
 
 @Component({
-  selector: 'lm-signin',
+  selector: 'lm-signup',
   templateUrl: './signup.component.html',
   styleUrls: ["./signup-component.scss"]
 })
 
 export class SignupComponent implements OnInit {
-  public signinData: any = {};
+  public signupData: any = {};
   public loading: boolean = false;
 
   constructor(private auth: AuthService, private router: Router) {
@@ -22,8 +22,16 @@ export class SignupComponent implements OnInit {
 
   }
 
-  login(data) {
+  signup(data) {
     this.loading = true;
-    console.log(data);
+    this.auth.createUser(data)
+      .then(() => {
+        this.loading = false;
+        this.router.navigate(['/'])
+      })
+      .catch((error) => {
+        this.loading = false;
+        console.log(error);
+    })
   }
 }

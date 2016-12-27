@@ -11,7 +11,7 @@ import { AuthService } from '../services/auth.service';
 })
 
 export class LoginComponent implements OnInit {
-  public credentials: any = {};
+  private credentials: any = {};
   public loading: boolean = false;
 
   constructor(private auth: AuthService, private router: Router) {}
@@ -22,6 +22,8 @@ export class LoginComponent implements OnInit {
 
   login() {
     this.loading = true;
-
+    this.auth.login(this.credentials).then(() => {
+      this.router.navigate(['/']);
+    })
   }
 }

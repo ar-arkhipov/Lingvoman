@@ -1,42 +1,40 @@
-import { Http, Response } from '@angular/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
+import { AngularFire } from 'angularfire2';
+import { FirebaseRef } from 'angularfire2';
 import 'rxjs/add/operator/map';
+import 'rxjs/add/operator/first';
 
-const ENDPOINT = 'http://localhost:1337/login';
 
 @Injectable()
 export class AuthService {
-  private isLogged: boolean = false;
-  public token: string;
-  public user: any;
 
-  constructor(private http: Http) {
-    let userData = JSON.parse(localStorage.getItem('userData'));
-    this.isLogged = !!userData;
-    this.token = userData && userData.token;
-    this.user = userData && userData.user;
+  constructor(private af: AngularFire) {
+
   }
 
-  login(credentials: any): Observable<boolean> {
-    return this.http
-      .post(ENDPOINT, credentials)
-      .map((res: Response) => {
-        let userData = res.json();
-        this.token = userData.token;
-        this.user = userData.user;
-        this.isLogged = true;
-        localStorage.setItem('userData', JSON.stringify(userData));
-        return true;
-      })
+  createUser(signupData) {
+    return this.af.auth.createUser({
+      email: signupData.email,
+      password: signupData.password
+    }).then((success) => {
+      this.af.database.object('/users/'+success.uid)
+        .set({
+          firstname: signupData.firstname,
+          lastname: signupData.lastname,
+          email: signupData.email
+        });
+    });
+  }
+
+  login(credentials: any) {
+    return this.af.auth.login(credentials).then((success) => {
+
+    });
   }
 
   logout() {
-    localStorage.removeItem('userData');
-    this.isLogged = false;
+    return this.af.auth.logout();
   }
 
-  isLoggedIn() {
-    return this.isLogged;
-  }
 }

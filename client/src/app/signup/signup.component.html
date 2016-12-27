@@ -1,21 +1,21 @@
 <div class="signup-component row">
   <div class="col s4 offset-s4">
-    <form materialize class="signup-form card-panel grey lighten-5" name="signup-form" #f="ngForm" (ngSubmit)="f.form.valid && login(signinData)" novalidate>
+    <form materialize class="signup-form card-panel grey lighten-5" name="signup-form" #f="ngForm" (ngSubmit)="f.form.valid && signup(signupData)" novalidate>
       <div class="flow-text teal-text center-align">New account</div>
       <div class="input-field" [ngClass]="{'has-error':firstname.touched && !firstname.valid}">
-        <input id="firstname" type="text" name="firstname" [(ngModel)]="signinData.firstname" #firstname="ngModel" [rangeLength]="[3, 20]" required>
+        <input id="firstname" type="text" name="firstname" [(ngModel)]="signupData.firstname" #firstname="ngModel" [rangeLength]="[3, 20]" required>
         <label for="firstname">First name *</label>
       </div>
       <div class="input-field" [ngClass]="{'has-error':lastname.touched && !lastname.valid}">
-        <input id="lastname" type="text" name="lastname" [(ngModel)]="signinData.lastname" #lastname="ngModel" [rangeLength]="[3, 20]" required>
+        <input id="lastname" type="text" name="lastname" [(ngModel)]="signupData.lastname" #lastname="ngModel" [rangeLength]="[3, 20]" required>
         <label for="lastname">Last name *</label>
       </div>
       <div class="input-field" [ngClass]="{'has-error':email.touched && !email.valid}">
-        <input id="email" type="text" name="email" [(ngModel)]="signinData.email" #email="ngModel" email required>
+        <input id="email" type="text" name="email" [(ngModel)]="signupData.email" #email="ngModel" email required>
         <label for="email">E-mail</label>
       </div>
       <div class="input-field" [ngClass]="{'has-error':password.touched && !password.valid}">
-        <input id="password" type="password" name="password" [(ngModel)]="signinData.password" #password="ngModel" [min]="6" required>
+        <input id="password" type="password" name="password" [(ngModel)]="signupData.password" #password="ngModel" required>
         <label for="password">Password *</label>
       </div>
       <button [disabled]="loading || !f.form.valid" type="submit" class="waves-effect waves-light btn">Register</button>

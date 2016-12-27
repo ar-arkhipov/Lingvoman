@@ -6,7 +6,7 @@ import { RouterModule } from "@angular/router";
 
 import { CustomFormsModule } from 'ng2-validation';
 import { MaterializeModule } from 'angular2-materialize';
-import { AngularFireModule} from 'angularfire2';
+import { AngularFireModule, AuthProviders, AuthMethods} from 'angularfire2';
 
 import { ROUTES } from "./app.route";
 import { AuthGuard } from "./guards/auth.guard";
@@ -23,10 +23,15 @@ import { TransService } from "./services/trans.service";
 
 // Must export the config
 export const firebaseConfig = {
-  apiKey: "xxx",
-  authDomain: "xxx",
-  databaseURL: "xxx",
-  storageBucket: "xxx"
+  apiKey: "AIzaSyBGP7EnSy9ktISts4xIuBcZsK5x4jyhFP8",
+  authDomain: "lingvo-b3624.firebaseapp.com",
+  databaseURL: "https://lingvo-b3624.firebaseio.com",
+  storageBucket: "lingvo-b3624.appspot.com"
+};
+
+export const firebaseAuthConfig = {
+  provider: AuthProviders.Password,
+  method: AuthMethods.Password
 };
 
 @NgModule({
@@ -46,7 +51,7 @@ export const firebaseConfig = {
     HttpModule,
     RouterModule.forRoot(ROUTES),
     MaterializeModule,
-    AngularFireModule.initializeApp(firebaseConfig)
+    AngularFireModule.initializeApp(firebaseConfig, firebaseAuthConfig)
   ],
   providers: [
     AuthService,

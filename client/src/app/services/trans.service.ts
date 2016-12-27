@@ -11,15 +11,11 @@ export class TransService {
   private options: RequestOptions;
 
   constructor(private http: Http, private auth: AuthService) {
-    let token = auth.token || '';
-    let headers = new Headers();
-    headers.append('x-access-token', token);
-    this.options = new RequestOptions({headers: headers});
+
   }
 
-  getList(): Observable<Response> {
-    let url: string = API_ENDPOINT + 'uitranslate/list';
-    return this.http.get(url, this.options).map((res) => res.json());
+  getList():any {
+
   }
 
 }
