@@ -1,7 +1,0 @@
-{
-  "port" : 1337,
-  "mongo" : {
-    "uri" : "mongodb://localhost/lingvoman"
-  },
-  "jwtSecret" : "SECRET_SSSSHHHHH"
-}

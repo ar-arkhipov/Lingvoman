@@ -27,6 +27,6 @@ app.all('/api/*', [require('./middlewares/validateRequest')]);
 app.use('/', require('./routes'));
 
 //start server
-app.listen(config.get('port'), function(){
-    console.log('Express server listening on port ' + config.get('port'));
+app.listen(config['port'], function(){
+    console.log('Express server listening on port ' + config['port']);
 });

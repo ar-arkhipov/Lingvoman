@@ -5,7 +5,7 @@ module.exports = function(req, res, next) {
   var token = (req.headers['x-access-token']);
   if (token) {
     try {
-      var decoded = jwt.decode(token, config.get('jwtSecret'));
+      var decoded = jwt.decode(token, config['jwtSecret']);
       var dUser = decoded.user;
 
       if (decoded.exp <= Date.now()) {

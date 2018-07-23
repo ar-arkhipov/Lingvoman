@@ -1,5 +1,7 @@
-var nconf = require('nconf');
+var config = {
+    port: 1337,
+    jwtSecret: process.env.JWT_SECRET || 'SECRET_SHHHHHH',
+    mongouri: process.env.MONGO_URI || 'mongodb://localhost/lingvoman'
+};
 
-nconf.argv().env().file({file: './config.json'});
-
-module.exports = nconf;
+module.exports = config;

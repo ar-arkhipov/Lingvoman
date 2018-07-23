@@ -1,7 +1,7 @@
 var config = require('./config.js');
 var mongoose    = require('mongoose');
 
-mongoose.connect(config.get('mongo:uri'));
+mongoose.connect(config['mongouri']);
 var db = mongoose.connection;
 
 var Schema = mongoose.Schema;

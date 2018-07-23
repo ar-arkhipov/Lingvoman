@@ -3,7 +3,7 @@ var pwd = require('./middlewares/pwd.js');
 
 User.create({
     username:'admin',
-    password: pwd.pwdgen('yourpassword'),
+    password: pwd.pwdgen(process.env.ADMIN_PASS || 'yourpassword'),
     userObj: {role:"admin", name:'name'}
 }, response);
 
