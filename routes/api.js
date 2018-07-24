@@ -73,14 +73,14 @@ var api = {
     },
 
     uiTranslationsChange : function(req, res) {
-        if(req.body.projectID&&req.body.locale) {
+        if(req.body.projectID && req.body.locale && req.body.translations) {
             var query = {
                 'projectID': req.body.projectID,
                 'locale': req.body.locale
             };
             uiReservator(query, res, makeChanges);
             function makeChanges() {
-                UiTran.update(query, req.body, {upsert: true}, function (err, data) {
+                UiTran.update(query, { $set: {translations: req.body.translations}}, {upsert: true}, function (err, data) {
                     res.send(data);
                 });
             }
@@ -237,7 +237,7 @@ var uiReservator = function(query, res, callback) {
         if (doc) {
             delete doc._id;
             newDoc = JSON.parse(JSON.stringify(doc));
-            UiReservedTran.update(query, newDoc, {upsert:true}, function(err, data) {
+            UiReservedTran.update(query, newDoc, {upsert:true, overwrite:true}, function(err, data) {
                 console.log(data);
                 callback();
             });
