@@ -1,16 +1,16 @@
 //Dependencies
-var config = require('./libs/config.js');
-var express         = require('express');
-var bodyParser = require('body-parser');
-var methodOverride = require('method-override');
-var morgan = require('morgan');
-var path            = require('path');
+const config = require('./libs/config.js');
+const express = require('express');
+const methodOverride = require('method-override');
+const morgan = require('morgan');
+const path = require('path');
 
-var app = express();
+const app = express();
 
 
 app.use(morgan('dev')); //logger
-app.use(bodyParser());  //parsing of post request body
+app.use(express.json()); //parsing of JSON request body (built into Express 4.16+)
+app.use(express.urlencoded({ extended: true })); //parsing of URL-encoded request body
 app.use(methodOverride()); //adding understanding of put, delete etc. methods
 app.use(express.static(path.join(__dirname, "public"))); //static files serve
 

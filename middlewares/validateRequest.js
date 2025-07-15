@@ -1,14 +1,14 @@
-var config = require('../libs/config');
-var jwt = require('jwt-simple');
+const config = require('../libs/config');
+const jwt = require('jsonwebtoken');
 
 module.exports = function(req, res, next) {
-  var token = (req.headers['x-access-token']);
+  const token = (req.headers['x-access-token']);
   if (token) {
     try {
-      var decoded = jwt.decode(token, config['jwtSecret']);
-      var dUser = decoded.user;
+      const decoded = jwt.verify(token, config['jwtSecret']);
+      const dUser = decoded.user;
 
-      if (decoded.exp <= Date.now()) {
+      if (decoded.exp <= Date.now() / 1000) {
         res.status(400);
         res.json({
           "status": 400,
@@ -16,8 +16,8 @@ module.exports = function(req, res, next) {
         });
       }
       if (dUser) {
-        var role = dUser.role;
-        var query = req.url;
+        const role = dUser.role;
+        const query = req.url;
         if (checkRights(query, role)) {
           next(); // To move to next middleware
         } else {

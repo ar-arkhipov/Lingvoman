@@ -1,16 +1,21 @@
-var gulp = require('gulp');
-var concat = require('gulp-concat');
-var ngAnnotate = require('gulp-ng-annotate');
-var uglify = require('gulp-uglify');
+const gulp = require('gulp');
+const concat = require('gulp-concat');
+const ngAnnotate = require('gulp-ng-annotate');
+const uglify = require('gulp-uglify');
 
-gulp.task('js', function () {
-    gulp.src(['src/**/module.js', 'src/**/*.js'])
+function js() {
+    return gulp.src(['src/**/module.js', 'src/**/*.js'])
         .pipe(concat('app.js'))
         .pipe(ngAnnotate())
         .pipe(uglify())
-        .pipe(gulp.dest('./js/'))
-});
+        .pipe(gulp.dest('./js/'));
+}
 
-gulp.task('watch', ['js'], function() {
-   gulp.watch('src/**/*.js', ['js']);
-});
+function watch() {
+    return gulp.watch('src/**/*.js', js);
+}
+
+// Export tasks
+exports.js = js;
+exports.watch = gulp.series(js, watch);
+exports.default = js;

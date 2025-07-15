@@ -1,7 +1,7 @@
-var express = require('express');
-var router = express.Router();
-var auth = require('../middlewares/auth.js');
-var api = require('./api.js');
+const express = require('express');
+const router = express.Router();
+const auth = require('../middlewares/auth.js');
+const api = require('./api.js');
 
 router.post('/login', auth.login);
 
