@@ -10,4 +10,5 @@ src/api/*/*.spec.js
 src/api/*/*.service.js
 *.log
 test/*
-yarn.lock 
+yarn.lock
+tests
