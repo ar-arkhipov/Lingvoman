@@ -17,12 +17,13 @@ export default [
       'test/*',
       'yarn.lock',
       'test**.js',
-      'public/**/*'
+      'public/**/*',
+      'tests/*'
     ],
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: {
         _: true,
         util: true,
@@ -45,7 +46,8 @@ export default [
         'error',
         {
           args: 'none',
-          varsIgnorePattern: '^_$|^error$'
+          varsIgnorePattern: '^_$|^error$',
+          caughtErrors: 'none'
         }
       ],
       'arrow-parens': ['error', 'always'],
