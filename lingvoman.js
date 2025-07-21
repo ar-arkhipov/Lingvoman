@@ -12,12 +12,12 @@ app.use(morgan('dev')); //logger
 app.use(express.json()); //parsing of JSON request body (built into Express 4.16+)
 app.use(express.urlencoded({ extended: true })); //parsing of URL-encoded request body
 app.use(methodOverride()); //adding understanding of put, delete etc. methods
-app.use(express.static(path.join(__dirname, "public"))); //static files serve
+app.use(express.static(path.join(__dirname, 'public'))); //static files serve
 
 //allow cross-domain requests
 app.all('*', function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type");
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
   next();
  });

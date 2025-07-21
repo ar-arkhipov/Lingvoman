@@ -1,4 +1,5 @@
 'use strict';
+
 (function() {
     angular
         .module('app')
@@ -7,18 +8,19 @@
     UiTranslatesCtrl.$inject = ['$resource', '$rootScope', '$window'];
 
     function UiTranslatesCtrl($resource, $rootScope, $window) {
-        var vm = this;
+        const vm = this;
+
         vm.id = '';
         vm.locale = '';
         vm.data = [];
         vm.copiesList = [];
 
 //resource list
-        var initial = $resource('/api/uitranslate/list');
-        var trans = $resource('/api/uitranslate/item', {}, {
+        const initial = $resource('/api/uitranslate/list');
+        const trans = $resource('/api/uitranslate/item', {}, {
             put: {method: 'PUT'}
         });
-        var restore = $resource('/api/uitranslate/backup');
+        const restore = $resource('/api/uitranslate/backup');
 
 //receiving information about available translations (id, locale)
         vm.init = function () {
@@ -40,11 +42,13 @@
                 trans.query({'projectID': vm.id, 'locale': vm.locale}).$promise.then(function (data) {
                     console.log(data);
                     vm.data = data;
-                    for (var n = 0; n < vm.data.length; n++) {
+
+                    for (let n = 0; n < vm.data.length; n++) {
                         if (!vm.data[n].translations) {
                             vm.data[n].translations = {};
                         }
                     }
+
                     if (vm.data.length) {
                         $rootScope.$broadcast('growl', {type: 'success', msg: 'Translations received!'});
                     } else {
@@ -65,6 +69,7 @@
                 console.log(item);
                 trans.save(item).$promise.then(function (data) {
                     console.log(data);
+
                     if (data.ok) {
                         $rootScope.$broadcast('growl', {
                             type: 'success',
@@ -79,12 +84,13 @@
 //creating a fully new document if such ID is not already used
         vm.makeNew = function () {
             if (vm.gettingForm.$valid) {
-                var alphaId = prompt('Alphabetical name of the project', 'project');
+                const alphaId = prompt('Alphabetical name of the project', 'project');
+
                 if (vm.id && vm.locale && alphaId) {
                     trans.put({
-                        "projectID": vm.id,
-                        "locale": vm.locale,
-                        "projectAlphaId": alphaId
+                        'projectID': vm.id,
+                        'locale': vm.locale,
+                        'projectAlphaId': alphaId
                     }).$promise.then(function (data) {
                         if (data.status == 400) {
                             $rootScope.$broadcast('growl', {
@@ -98,7 +104,7 @@
                             });
                             vm.getTrans();
                         }
-                    })
+                    });
                 }
             }
         };
@@ -107,6 +113,7 @@
         vm.deleteField = function (obj, key, def) {
             delete obj[key][def];
         };
+
 // add field
         vm.addField = function (obj, key, newField) {
             if (obj[key][newField.toUpperCase()]) {
@@ -115,11 +122,13 @@
                 obj[key][newField.toUpperCase()] = '';
             }
         };
+
 // delete group from a document
         vm.deleteGroup = function (obj, key) {
             console.log('deleted');
             delete obj[key];
         };
+
 // add group
         vm.addGroup = function (obj, newGroup) {
             if (obj[newGroup.toUpperCase()]) {
@@ -128,10 +137,12 @@
                 obj[newGroup.toUpperCase()] = {};
             }
         };
+
 // creating a local copy of document with new locale, should be saved after being filled in
         vm.makeCopy = function (item) {
-            var newLang = prompt('Please enter the name of locale: ');
-            var newItem = (JSON.parse(JSON.stringify(item)));
+            const newLang = prompt('Please enter the name of locale: ');
+            const newItem = (JSON.parse(JSON.stringify(item)));
+
             if (newLang) {
                 trans.query({'projectID': newItem.projectID, 'locale': newLang}).$promise.then(function (data) {
                     if (!data.length) {
@@ -147,13 +158,16 @@
                 });
             }
         };
+
 // removing document from the main collection
         vm.removeDoc = function (item) {
             if (confirm('You are going to TOTALLY DELETE document ' + item.locale + ' of project ' + item.projectID + '-' + item.projectAlphaId)) {
                 trans.delete(item).$promise.then(function (data) {
                     console.log(data);
+
                     if (data.ok) {
-                        var index = vm.data.indexOf(item);
+                        const index = vm.data.indexOf(item);
+
                         vm.data.splice(index, 1);
                         $rootScope.$broadcast('growl', {type: 'success', msg: 'Document has been deleted'});
                     } else {
@@ -162,19 +176,22 @@
                 });
             }
         };
+
 // get aggregated list of available documents in backup collection
         vm.checkCopies = function () {
             restore.query({}).$promise.then(function (data) {
                 console.log(data);
                 vm.copiesList = data;
                 vm.data = [];
-            })
+            });
         };
+
 // restore definite document from backup collection to main
         vm.restore = function (id, locale) {
             if (confirm('Are you sure you want to recover/replace the document with backup-copy?')) {
-                restore.save({"projectID": id, "locale": locale}).$promise.then(function (data) {
+                restore.save({'projectID': id, locale}).$promise.then(function (data) {
                     console.log(data);
+
                     if (data.ok) {
                         $rootScope.$broadcast('growl', {type: 'success', msg: 'Document recovered succesfuly!'});
                         vm.copiesList = [];

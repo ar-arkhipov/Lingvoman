@@ -11,7 +11,7 @@
     "express": "4.21.2",
     "gulp": "5.0.1",
     "gulp-concat": "2.6.1",
-    "gulp-ng-annotate": "2.1.0",
+    "gulp-ng-annotate": "^0.2.0",
     "gulp-uglify": "3.0.2",
     "jsonwebtoken": "9.0.2",
     "method-override": "3.0.0",
@@ -46,5 +46,11 @@
     "url": "git+https://github.com/Tamango92/Lingvoman.git"
   },
   "author": "Tamango",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.5.1",
+    "prettier": "^3.6.2"
+  }
 }

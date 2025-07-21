@@ -1,4 +1,5 @@
 'use strict';
+
 (function() {
     angular
         .module('app')
@@ -7,12 +8,14 @@
     Auth.$inject = ['$window'];
 
     function Auth($window) {
-        var auth = {
+        const auth = {
             isLogged: (function () {
                 return !!$window.sessionStorage.token;
             }())
         };
+
         console.log(auth);
+
         return auth;
     }
 
@@ -24,19 +27,20 @@
 
     function UserAuthFactory($window, $resource, Auth) {
         return {
-            login: function (username, password) {
-                var loginRes = $resource('/login');
+            login (username, password) {
+                const loginRes = $resource('/login');
+
                 return loginRes.save({
-                    username: username,
-                    password: password
+                    username,
+                    password
                 });
             },
 
-            logout: function () {
+            logout () {
                 if (Auth.isLogged) {
                     delete $window.sessionStorage.token;
                 }
             }
-        }
+        };
     }
 })();

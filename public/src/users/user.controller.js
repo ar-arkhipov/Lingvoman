@@ -1,4 +1,5 @@
 'use strict';
+
 (function() {
     angular
         .module('app')
@@ -7,7 +8,7 @@
     UsersCtrl.$inject = ['$resource', '$rootScope'];
 
     function UsersCtrl($resource, $rootScope) {
-        var vm = this;
+        const vm = this;
 
         vm.newUser = {
             username: '',
@@ -21,7 +22,7 @@
         vm.usersList = [];
         vm.rolesList = ['admin', 'translater'];
 
-        var users = $resource('/api/users', {}, {
+        const users = $resource('/api/users', {}, {
             put: {method: 'PUT'}
         });
 
@@ -37,10 +38,11 @@
                 users.put(vm.newUser).$promise.then(function (data) {
                     vm.getUsers();
                     console.log(data);
+
                     if(data.status != 400)
                     $rootScope.$broadcast('growl', {
-                        type: "success",
-                        msg: "User created"
+                        type: 'success',
+                        msg: 'User created'
                     });
                 });
             } else {
@@ -57,19 +59,21 @@
 
         vm.deleteUser = function (user, username) {
             if (confirm('Are you sure you want to delete user ' + username + ' ?')) {
-                users.delete({username: username}).$promise.then(function (data) {
+                users.delete({username}).$promise.then(function (data) {
                     console.log(data);
+
                     if (data.ok) {
-                        var index = vm.usersList.indexOf(user);
+                        const index = vm.usersList.indexOf(user);
+
                         vm.usersList.splice(index, 1);
                         $rootScope.$broadcast('growl', {
-                            type: "success",
-                            msg: "User deleted"
+                            type: 'success',
+                            msg: 'User deleted'
                         });
                     } else {
                         $rootScope.$broadcast(('growl', {
-                            type: "danger",
-                            msg: "Unexpected error"
+                            type: 'danger',
+                            msg: 'Unexpected error'
                         }));
                     }
                 });

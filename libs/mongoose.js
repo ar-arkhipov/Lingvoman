@@ -1,12 +1,11 @@
 const config = require('./config.js');
 const mongoose = require('mongoose');
 
-mongoose.connect(config['mongouri']).then(x => {
-	console.log('Connected')
-}).catch(err => {
-	console.log("error", err)
+mongoose.connect(config['mongouri']).then(() => {
+	console.log('Connected');
+}).catch((err) => {
+	console.log('error', err);
 });
-const db = mongoose.connection;
 
 const Schema = mongoose.Schema;
 

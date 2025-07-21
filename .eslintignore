@@ -1,0 +1,13 @@
+migration/*
+public/*
+src/**/*.json
+core/node_modules/*
+core/**/prompts.js
+core/package.json
+core/package-lock.json
+node_modules/
+src/api/*/*.spec.js
+src/api/*/*.service.js
+*.log
+test/*
+yarn.lock 

@@ -1,4 +1,5 @@
 'use strict';
+
 (function() {
     angular.module('app', ['ngResource', 'ui.bootstrap', 'ui.router']);
 
@@ -36,10 +37,12 @@
     function runBlock($rootScope, $state, Auth) {
         $rootScope.$on('$stateChangeStart', function (e, toState, toParams, fromState, fromParams) {
             console.log('Going: ' + toState.name);
+
             if (!Auth.isLogged && toState.name != 'login') {
                 e.preventDefault();
                 $state.go('login');
             }
+
             if (Auth.isLogged && toState.name == 'login') {
                 e.preventDefault();
                 $state.go('default');

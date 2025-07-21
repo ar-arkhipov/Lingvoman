@@ -6,8 +6,9 @@ async function createAdmin() {
         const data = await User.create({
             username:'admin',
             password: pwd.pwdgen(process.env.ADMIN_PASS || 'yourpassword'),
-            userObj: {role:"admin", name:'name'}
+            userObj: {role:'admin', name:'name'}
         });
+
         console.log(data);
         process.exit();
     } catch (err) {

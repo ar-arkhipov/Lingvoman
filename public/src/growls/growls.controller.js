@@ -1,4 +1,5 @@
 'use strict';
+
 (function() {
     angular
         .module('app')
@@ -7,7 +8,7 @@
     GrowlCtrl.$inject = ['$rootScope'];
 
     function GrowlCtrl($rootScope) {
-        var vm = this;
+        const vm = this;
 
         vm.growls = [];
 
