@@ -7,9 +7,9 @@ JWT (JSON Web Token) technology is used as authorization method.
 User receives token after succesfull login and then this token should be placed in "x-access-token" header of every query. Only administrator can create users and set their rights.
 Method for login will be described in "API" section.
 
-Japanese Translation Sync
--------------------------
-New feature: Automatic Japanese translation sync using OpenAI API.
+Dynamic Translation Sync
+------------------------
+New feature: Automatic translation sync to any language using OpenAI API.
 
 **Requirements:**
 - Set `OPENAI_API_KEY` environment variable with your OpenAI API key
@@ -17,10 +17,10 @@ New feature: Automatic Japanese translation sync using OpenAI API.
 
 **How it works:**
 1. Select a project in the UI translations interface
-2. Click "Sync Japanese" button
-3. System compares English (en) and Japanese (jp) translation documents
+2. Click "Sync to Other Languages" button
+3. System discovers available languages from database documents
 4. Missing sections/keys are automatically translated using OpenAI
-5. Japanese document is updated with new translations
+5. Target language documents are updated with new translations
 6. Progress and results are shown in the UI
 
 **Features:**
@@ -96,7 +96,7 @@ Response: {mongo response}  //will refactor
 
 /api/uitranslate/sync
 ---------------------
-**NEW:** Synchronize Japanese translations using OpenAI API.
+**NEW:** Synchronize translations to any language using OpenAI API.
 
 Method: POST  
 Body: {projectID: *number*, projectAlphaId: *string*}  

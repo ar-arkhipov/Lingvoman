@@ -34,9 +34,7 @@
             put: {method: 'PUT'}
         });
         var restore = $resource('/api/uitranslate/backup');
-        var sync = $resource('/api/uitranslate/sync');
-        
-        // NEW FLEXIBLE TRANSLATION RESOURCES
+        // FLEXIBLE TRANSLATION RESOURCES
         var flexibleSync = $resource('/api/uitranslate/sync-flexible');
         var syncProgress = $resource('/api/uitranslate/sync-progress/:jobId', {jobId: '@jobId'});
         var projectLanguages = $resource('/api/uitranslate/languages/:projectID', {projectID: '@projectID'});
@@ -59,14 +57,10 @@
             console.log('Project chosen:', project); // Debug log
             console.log('Available locales:', project.locales); // Debug log
             
-            // Set 'en' as default locale if available in the project
-            if (project.locales && project.locales.includes('en')) {
-                vm.locale = 'en';
-                console.log('Set locale to en'); // Debug log
-            } else if (project.locales && project.locales.length > 0) {
-                // If 'en' not available, use the first available locale
+            // Set first available locale as default
+            if (project.locales && project.locales.length > 0) {
                 vm.locale = project.locales[0];
-                console.log('Set locale to first available:', project.locales[0]); // Debug log
+                console.log('Set locale to', vm.locale); // Debug log
             }
             
             // Force Angular to update the view safely
@@ -101,62 +95,7 @@
             }
         };
 
-//sync Japanese translations using OpenAI
-        vm.syncJapanese = function () {
-            if (!vm.chosen) {
-                $rootScope.$broadcast('growl', {
-                    type: 'danger',
-                    msg: 'Please select a project first'
-                });
-                return;
-            }
-
-            vm.syncInProgress = true;
-            vm.syncResult = null;
-
-            var syncData = {
-                projectID: vm.chosen.projectID,
-                projectAlphaId: vm.chosen.projectAlphaId
-            };
-
-            console.log('Starting Japanese sync for:', syncData);
-
-            sync.save(syncData).$promise.then(function (response) {
-                console.log('Sync response:', response);
-                vm.syncResult = response;
-                vm.syncInProgress = false;
-
-                if (response.status === 'success') {
-                    $rootScope.$broadcast('growl', {
-                        type: 'success',
-                        msg: 'Japanese translations synced successfully!'
-                    });
-
-                    // Refresh the current view if we're looking at translations
-                    if (vm.data.length > 0) {
-                        vm.getTrans();
-                    }
-                } else {
-                    $rootScope.$broadcast('growl', {
-                        type: 'danger',
-                        msg: 'Sync failed: ' + response.message
-                    });
-                }
-            }).catch(function (error) {
-                console.error('Sync error:', error);
-                vm.syncInProgress = false;
-                vm.syncResult = {
-                    status: 'error',
-                    message: 'Network error or server unavailable',
-                    error: error.statusText || 'Unknown error'
-                };
-
-                $rootScope.$broadcast('growl', {
-                    type: 'danger',
-                    msg: 'Sync failed due to network error'
-                });
-            });
-        };
+// DEPRECATED: Japanese-specific sync removed - use flexible sync modal instead
 
         // NEW FLEXIBLE TRANSLATION SYNC FUNCTIONS
 

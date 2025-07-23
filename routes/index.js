@@ -22,7 +22,7 @@ router.post('/api/uitranslate/item', api.uiTranslationsChange);
 router.delete('/api/uitranslate/item', api.uiTranslationsDelete);
 //creating fully new document (new id, loc, alphaId)
 router.put('/api/uitranslate/item', api.uiTranslationsCreate);
-//sync Japanese translations using OpenAI (DEPRECATED - use flexible sync instead)
+
 router.post('/api/uitranslate/sync', api.uiTranslationsSync);
 
 // NEW FLEXIBLE LANGUAGE-AGNOSTIC TRANSLATION ENDPOINTS
