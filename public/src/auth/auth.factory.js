@@ -8,7 +8,7 @@
     Auth.$inject = ['$window'];
 
     function Auth($window) {
-        const auth = {
+        var auth = {
             isLogged: (function () {
                 return !!$window.sessionStorage.token;
             }())
@@ -27,16 +27,16 @@
 
     function UserAuthFactory($window, $resource, Auth) {
         return {
-            login (username, password) {
-                const loginRes = $resource('/login');
+            login: function(username, password) {
+                var loginRes = $resource('/login');
 
                 return loginRes.save({
-                    username,
-                    password
+                    username: username,
+                    password: password
                 });
             },
 
-            logout () {
+            logout: function() {
                 if (Auth.isLogged) {
                     delete $window.sessionStorage.token;
                 }

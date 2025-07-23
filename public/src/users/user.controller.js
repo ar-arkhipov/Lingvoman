@@ -8,7 +8,7 @@
     UsersCtrl.$inject = ['$resource', '$rootScope'];
 
     function UsersCtrl($resource, $rootScope) {
-        const vm = this;
+        var vm = this;
 
         vm.newUser = {
             username: '',
@@ -22,7 +22,7 @@
         vm.usersList = [];
         vm.rolesList = ['admin', 'translater'];
 
-        const users = $resource('/api/users', {}, {
+        var users = $resource('/api/users', {}, {
             put: {method: 'PUT'}
         });
 
@@ -59,11 +59,11 @@
 
         vm.deleteUser = function (user, username) {
             if (confirm('Are you sure you want to delete user ' + username + ' ?')) {
-                users.delete({username}).$promise.then(function (data) {
+                users.delete({username: username}).$promise.then(function (data) {
                     console.log(data);
 
                     if (data.ok) {
-                        const index = vm.usersList.indexOf(user);
+                        var index = vm.usersList.indexOf(user);
 
                         vm.usersList.splice(index, 1);
                         $rootScope.$broadcast('growl', {

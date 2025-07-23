@@ -5,25 +5,29 @@
         .module('app')
         .controller('UiTranslatesCtrl', UiTranslatesCtrl);
 
-    UiTranslatesCtrl.$inject = ['$resource', '$rootScope', '$window'];
+    UiTranslatesCtrl.$inject = ['$resource', '$rootScope', '$window', '$timeout'];
 
-    function UiTranslatesCtrl($resource, $rootScope, $window) {
-        const vm = this;
+    function UiTranslatesCtrl($resource, $rootScope, $window, $timeout) {
+        var vm = this;
 
         vm.id = '';
         vm.locale = '';
         vm.data = [];
         vm.copiesList = [];
+        vm.syncInProgress = false;
+        vm.syncResult = null;
 
 //resource list
-        const initial = $resource('/api/uitranslate/list');
-        const trans = $resource('/api/uitranslate/item', {}, {
+        var initial = $resource('/api/uitranslate/list');
+        var trans = $resource('/api/uitranslate/item', {}, {
             put: {method: 'PUT'}
         });
-        const restore = $resource('/api/uitranslate/backup');
+        var restore = $resource('/api/uitranslate/backup');
+        var sync = $resource('/api/uitranslate/sync');
 
 //receiving information about available translations (id, locale)
         vm.init = function () {
+            console.log('Initializing UiTranslatesCtrl...');
             initial.query().$promise.then(function (data) {
                 console.log(data);
                 vm.initList = data;
@@ -34,6 +38,24 @@
         vm.chooseProject = function (project) {
             vm.id = project.projectID;
             vm.chosen = project;
+            
+            console.log('Project chosen:', project); // Debug log
+            console.log('Available locales:', project.locales); // Debug log
+            
+            // Set 'en' as default locale if available in the project
+            if (project.locales && project.locales.includes('en')) {
+                vm.locale = 'en';
+                console.log('Set locale to en'); // Debug log
+            } else if (project.locales && project.locales.length > 0) {
+                // If 'en' not available, use the first available locale
+                vm.locale = project.locales[0];
+                console.log('Set locale to first available:', project.locales[0]); // Debug log
+            }
+            
+            // Force Angular to update the view safely
+            $timeout(function() {
+                // This ensures the view is updated
+            }, 0);
         };
 
 //get a definite translations json from main collection
@@ -62,6 +84,63 @@
             }
         };
 
+//sync Japanese translations using OpenAI
+        vm.syncJapanese = function () {
+            if (!vm.chosen) {
+                $rootScope.$broadcast('growl', {
+                    type: 'danger',
+                    msg: 'Please select a project first'
+                });
+                return;
+            }
+
+            vm.syncInProgress = true;
+            vm.syncResult = null;
+
+            var syncData = {
+                projectID: vm.chosen.projectID,
+                projectAlphaId: vm.chosen.projectAlphaId
+            };
+
+            console.log('Starting Japanese sync for:', syncData);
+
+            sync.save(syncData).$promise.then(function (response) {
+                console.log('Sync response:', response);
+                vm.syncResult = response;
+                vm.syncInProgress = false;
+
+                if (response.status === 'success') {
+                    $rootScope.$broadcast('growl', {
+                        type: 'success',
+                        msg: 'Japanese translations synced successfully!'
+                    });
+
+                    // Refresh the current view if we're looking at translations
+                    if (vm.data.length > 0) {
+                        vm.getTrans();
+                    }
+                } else {
+                    $rootScope.$broadcast('growl', {
+                        type: 'danger',
+                        msg: 'Sync failed: ' + response.message
+                    });
+                }
+            }).catch(function (error) {
+                console.error('Sync error:', error);
+                vm.syncInProgress = false;
+                vm.syncResult = {
+                    status: 'error',
+                    message: 'Network error or server unavailable',
+                    error: error.statusText || 'Unknown error'
+                };
+
+                $rootScope.$broadcast('growl', {
+                    type: 'danger',
+                    msg: 'Sync failed due to network error'
+                });
+            });
+        };
+
 //save changes
         vm.changeTranslation = function (item) {
             if (confirm('Are you sure you want to save?')) {
@@ -84,7 +163,7 @@
 //creating a fully new document if such ID is not already used
         vm.makeNew = function () {
             if (vm.gettingForm.$valid) {
-                const alphaId = prompt('Alphabetical name of the project', 'project');
+                var alphaId = prompt('Alphabetical name of the project', 'project');
 
                 if (vm.id && vm.locale && alphaId) {
                     trans.put({
@@ -140,8 +219,8 @@
 
 // creating a local copy of document with new locale, should be saved after being filled in
         vm.makeCopy = function (item) {
-            const newLang = prompt('Please enter the name of locale: ');
-            const newItem = (JSON.parse(JSON.stringify(item)));
+            var newLang = prompt('Please enter the name of locale: ');
+            var newItem = (JSON.parse(JSON.stringify(item)));
 
             if (newLang) {
                 trans.query({'projectID': newItem.projectID, 'locale': newLang}).$promise.then(function (data) {
@@ -166,7 +245,7 @@
                     console.log(data);
 
                     if (data.ok) {
-                        const index = vm.data.indexOf(item);
+                        var index = vm.data.indexOf(item);
 
                         vm.data.splice(index, 1);
                         $rootScope.$broadcast('growl', {type: 'success', msg: 'Document has been deleted'});
@@ -189,7 +268,7 @@
 // restore definite document from backup collection to main
         vm.restore = function (id, locale) {
             if (confirm('Are you sure you want to recover/replace the document with backup-copy?')) {
-                restore.save({'projectID': id, locale}).$promise.then(function (data) {
+                restore.save({'projectID': id, locale: locale}).$promise.then(function (data) {
                     console.log(data);
 
                     if (data.ok) {

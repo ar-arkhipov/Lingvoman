@@ -9,7 +9,7 @@
 
     function TokenInterceptor($window, $rootScope) {
         return {
-            request (req) {
+            request: function(req) {
                 if ($window.sessionStorage.token) {
                     req.headers['x-access-token'] = $window.sessionStorage.token;
                 }
@@ -17,7 +17,7 @@
                 return req;
             },
 
-            responseError (resp) {
+            responseError: function(resp) {
                 if ([400, 401].indexOf(resp.status) !== -1 && resp.data.message) {
                     $rootScope.$broadcast('growl', {type: 'danger', msg: resp.data.message});
                 } else {

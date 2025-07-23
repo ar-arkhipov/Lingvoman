@@ -1,5 +1,6 @@
 const { UiTran, UiReservedTran, User } = require('../libs/mongoose.js');
 const pwd = require('../middlewares/pwd.js');
+const TranslationSyncService = require('../libs/translationSync.js');
 
 const api = {
     //UI translations
@@ -155,6 +156,53 @@ const api = {
             res.json({
                 status:400,
                 message: 'Bad request'
+            });
+        }
+    },
+
+    async uiTranslationsSync(req, res) {
+        if(req.body.projectID && req.body.projectAlphaId) {
+            try {
+                const syncService = new TranslationSyncService();
+                const result = await syncService.syncJapaneseTranslations(
+                    req.body.projectID, 
+                    req.body.projectAlphaId
+                );
+
+                if (result.success) {
+                    res.status(200);
+                    res.json({
+                        status: 'success',
+                        message: result.message,
+                        data: {
+                            translatedSections: result.translatedSections,
+                            skippedSections: result.skippedSections,
+                            totalSections: result.totalSections,
+                            newTranslations: result.newTranslations
+                        }
+                    });
+                } else {
+                    res.status(400);
+                    res.json({
+                        status: 'error',
+                        message: result.message,
+                        error: result.error
+                    });
+                }
+            } catch (error) {
+                console.error('Error in uiTranslationsSync:', error);
+                res.status(500);
+                res.json({
+                    status: 'error',
+                    message: 'Translation sync failed',
+                    error: error.message
+                });
+            }
+        } else {
+            res.status(400);
+            res.json({
+                status: 'error',
+                message: 'Bad request: projectID and projectAlphaId are required'
             });
         }
     },

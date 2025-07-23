@@ -7,6 +7,29 @@ JWT (JSON Web Token) technology is used as authorization method.
 User receives token after succesfull login and then this token should be placed in "x-access-token" header of every query. Only administrator can create users and set their rights.
 Method for login will be described in "API" section.
 
+Japanese Translation Sync
+-------------------------
+New feature: Automatic Japanese translation sync using OpenAI API.
+
+**Requirements:**
+- Set `OPENAI_API_KEY` environment variable with your OpenAI API key
+- Install dependencies: `npm install` (includes the `openai` package)
+
+**How it works:**
+1. Select a project in the UI translations interface
+2. Click "Sync Japanese" button
+3. System compares English (en) and Japanese (jp) translation documents
+4. Missing sections/keys are automatically translated using OpenAI
+5. Japanese document is updated with new translations
+6. Progress and results are shown in the UI
+
+**Features:**
+- Smart comparison: Only translates missing sections, preserves existing translations
+- Context-aware: Uses project and section context for better translations
+- Placeholder preservation: Maintains {variables}, %s, HTML tags, etc.
+- Error handling: Comprehensive error reporting and fallback mechanisms
+- Progress tracking: Real-time sync status with loading indicators
+
 #API
 
 /login
@@ -71,6 +94,42 @@ Params: projectID - numerous ID of the project
         locale - locale  
 Response: {mongo response}  //will refactor  
 
+/api/uitranslate/sync
+---------------------
+**NEW:** Synchronize Japanese translations using OpenAI API.
+
+Method: POST  
+Body: {projectID: *number*, projectAlphaId: *string*}  
+Response: {status: 'success'|'error', message: *string*, data: {...}}  
+
+**Response format (success):**
+```json
+{
+  "status": "success", 
+  "message": "Successfully translated X sections",
+  "data": {
+    "translatedSections": ["SECTION1", "SECTION2"],
+    "skippedSections": ["EXISTING_SECTION"],  
+    "totalSections": 5,
+    "newTranslations": {...}
+  }
+}
+```
+
+**Response format (error):**
+```json
+{
+  "status": "error",
+  "message": "Error description", 
+  "error": "Detailed error message"
+}
+```
+
+**Prerequisites:**
+- English (en) document must exist for the project
+- Valid OpenAI API key must be configured
+- User must have 'admin' or 'translater' role
+
 /api/uitranslate/backup
 ------------------------
 It is used to get the list of available projects and translations from special BACKUP mongo collection, where the previous state of documents is stored.  
@@ -100,6 +159,15 @@ Use *put* method to create user.
 Use *delete* method to delete user.  
   
 Better description will be made soon...
+
+Environment Variables
+--------------------
+```bash
+PORT=1337                    # Server port (default: 1337)
+JWT_SECRET=your_jwt_secret   # JWT signing secret
+MONGO_URI=mongodb://localhost/lingvoman  # MongoDB connection string
+OPENAI_API_KEY=sk-...        # OpenAI API key for translation sync
+```
 
 
 

@@ -8,13 +8,13 @@
     LoginCtrl.$inject = ['$window', 'Auth', 'UserAuthFactory', '$rootScope'];
 
     function LoginCtrl($window, Auth, UserAuthFactory, $rootScope) {
-        const vm = this;
+        var vm = this;
 
         vm.user = {};
 
         vm.login = function () {
-            const username = vm.user.username;
-            const password = vm.user.password;
+            var username = vm.user.username;
+            var password = vm.user.password;
 
             if (username !== undefined && password !== undefined) {
                 UserAuthFactory.login(username, password).$promise.then(function (data) {

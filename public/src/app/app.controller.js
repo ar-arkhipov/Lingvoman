@@ -8,7 +8,7 @@
     ApplicationCtrl.$inject = ['$window'];
 
     function ApplicationCtrl($window) {
-        const vm = this;
+        var vm = this;
 
         vm.role = $window.sessionStorage.role ? $window.sessionStorage.role : '';
         vm.name = $window.sessionStorage.name ? $window.sessionStorage.name : '';

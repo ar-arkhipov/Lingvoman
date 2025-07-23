@@ -46,11 +46,17 @@
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
-                <button type="submit" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document</button>
+                <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document</button>
+                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.syncJapanese()" ng-show="uiTranslatesCtrl.chosen" ng-disabled="uiTranslatesCtrl.syncInProgress">
+                    <span ng-if="!uiTranslatesCtrl.syncInProgress">Sync Japanese</span>
+                    <span ng-if="uiTranslatesCtrl.syncInProgress">
+                        <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Syncing...
+                    </span>
+                </button>
             </form>
 
             <form class="navbar-form pull-right">
-                <button type="submit" class="btn btn-info" ng-click="uiTranslatesCtrl.checkCopies()">Backup</button>
+                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.checkCopies()">Backup</button>
             </form>
         </div>
     </nav>
@@ -69,6 +75,28 @@
                         ng-click="uiTranslatesCtrl.restore(copy.projectID, locale)">{{locale}}</button>
             </div>
         </div>
+    </div>
+
+    <!-- sync results -->
+    <div class="alert alert-success" ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'success'">
+        <button type="button" class="close" ng-click="uiTranslatesCtrl.syncResult = null">&times;</button>
+        <h4>Sync Successful!</h4>
+        <p>{{uiTranslatesCtrl.syncResult.message}}</p>
+        <div ng-if="uiTranslatesCtrl.syncResult.data.translatedSections.length">
+            <strong>Translated sections:</strong>
+            <span class="label label-success" ng-repeat="section in uiTranslatesCtrl.syncResult.data.translatedSections">{{section}}</span>
+        </div>
+        <div ng-if="uiTranslatesCtrl.syncResult.data.skippedSections.length">
+            <strong>Already translated:</strong>
+            <span class="label label-info" ng-repeat="section in uiTranslatesCtrl.syncResult.data.skippedSections">{{section}}</span>
+        </div>
+    </div>
+
+    <div class="alert alert-danger" ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'error'">
+        <button type="button" class="close" ng-click="uiTranslatesCtrl.syncResult = null">&times;</button>
+        <h4>Sync Failed!</h4>
+        <p>{{uiTranslatesCtrl.syncResult.message}}</p>
+        <p ng-if="uiTranslatesCtrl.syncResult.error"><small>Error: {{uiTranslatesCtrl.syncResult.error}}</small></p>
     </div>
 
     <!-- MAIN CONTAINER -->

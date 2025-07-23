@@ -8,7 +8,7 @@
     GrowlCtrl.$inject = ['$rootScope'];
 
     function GrowlCtrl($rootScope) {
-        const vm = this;
+        var vm = this;
 
         vm.growls = [];
 

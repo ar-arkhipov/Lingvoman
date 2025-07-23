@@ -22,6 +22,8 @@ router.post('/api/uitranslate/item', api.uiTranslationsChange);
 router.delete('/api/uitranslate/item', api.uiTranslationsDelete);
 //creating fully new document (new id, loc, alphaId)
 router.put('/api/uitranslate/item', api.uiTranslationsCreate);
+//sync Japanese translations using OpenAI
+router.post('/api/uitranslate/sync', api.uiTranslationsSync);
 //serve aggregated list of available translations in backup collection
 router.get('/api/uitranslate/backup', api.uiTranslationsBackupGetList);
 //backup the previous version of document from backup collection
