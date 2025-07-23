@@ -47,6 +47,9 @@
                 </div>
                 <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
                 <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document</button>
+                <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()" ng-show="uiTranslatesCtrl.chosen">
+                    <i class="glyphicon glyphicon-plus" style="margin-right: 5px;"></i>Add Language
+                </button>
                 <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()" ng-show="uiTranslatesCtrl.chosen">
                     <i class="glyphicon glyphicon-globe" style="margin-right: 5px;"></i>Sync to Other Languages
                 </button>
@@ -284,22 +287,38 @@
                     <div ng-if="uiTranslatesCtrl.flexibleSyncInProgress">
                         <div class="row">
                             <div class="col-md-12">
-                                <h5>Translating to: <strong>{{uiTranslatesCtrl.currentTargetLocale}}</strong></h5>
+                                <h4 style="margin-bottom: 20px;">
+                                    <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate" style="margin-right: 8px;"></i>
+                                    Translating to <strong>{{uiTranslatesCtrl.getLanguageName(uiTranslatesCtrl.currentTargetLocale)}}</strong>
+                                </h4>
                                 
-                                <div class="progress">
+                                <div class="progress" style="height: 25px; margin-bottom: 15px;">
                                     <div class="progress-bar progress-bar-info progress-bar-striped active" 
                                          role="progressbar" 
-                                         ng-style="{width: uiTranslatesCtrl.syncProgress + '%'}">
+                                         ng-style="{width: uiTranslatesCtrl.syncProgress + '%'}"
+                                         style="line-height: 25px; font-weight: bold;">
                                         {{uiTranslatesCtrl.syncProgress}}%
                                     </div>
                                 </div>
 
-                                <div class="alert alert-info">
-                                    <strong>Step:</strong> {{uiTranslatesCtrl.syncStep}}<br>
-                                    <strong>Status:</strong> {{uiTranslatesCtrl.syncMessage}}
+                                <div class="panel panel-info">
+                                    <div class="panel-body">
+                                        <div ng-if="uiTranslatesCtrl.currentSectionName" style="margin-bottom: 10px;">
+                                            <strong>Current Section:</strong> 
+                                            <span class="label label-primary">{{uiTranslatesCtrl.currentSectionName}}</span>
+                                        </div>
+                                        
+                                        <div ng-if="uiTranslatesCtrl.sectionProgress" style="margin-bottom: 10px;">
+                                            <strong>Progress:</strong> {{uiTranslatesCtrl.sectionProgress}}
+                                        </div>
+                                        
+                                        <div>
+                                            <strong>Status:</strong> {{uiTranslatesCtrl.syncMessage}}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div ng-if="uiTranslatesCtrl.currentJobId" class="small text-muted">
+                                <div ng-if="uiTranslatesCtrl.currentJobId" class="small text-muted" style="text-align: center;">
                                     Job ID: {{uiTranslatesCtrl.currentJobId}}
                                 </div>
                             </div>
@@ -318,6 +337,86 @@
                         </span>
                         <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">
                             <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Syncing All...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD LANGUAGE MODAL -->
+    <div class="modal" tabindex="-1" role="dialog" ng-show="uiTranslatesCtrl.showAddLanguageModal" style="display: block;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" ng-click="uiTranslatesCtrl.closeAddLanguageModal()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <i class="glyphicon glyphicon-plus"></i> Add Language to Project
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div ng-if="!uiTranslatesCtrl.addingLanguage">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID: {{uiTranslatesCtrl.chosen.projectID}})</p>
+                                <p><strong>Current Languages:</strong> 
+                                    <span class="label label-info" style="margin-right: 5px;" ng-repeat="locale in uiTranslatesCtrl.chosen.locales">
+                                        {{locale | uppercase}}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>Select Language to Add:</h5>
+                                <div ng-if="uiTranslatesCtrl.availableLanguages.length > 0" class="form-group">
+                                    <select class="form-control" ng-model="uiTranslatesCtrl.selectedLanguage" ng-options="lang as (lang.name + ' (' + lang.nativeName + ') - ' + lang.code) for lang in uiTranslatesCtrl.availableLanguages track by lang.code">
+                                        <option value="">-- Select a language --</option>
+                                    </select>
+                                </div>
+                                
+                                <div ng-if="uiTranslatesCtrl.availableLanguages.length === 0" class="alert alert-info">
+                                    <i class="glyphicon glyphicon-info-sign"></i>
+                                    All common languages have already been added to this project.
+                                </div>
+                                
+                                <div ng-if="uiTranslatesCtrl.selectedLanguage" class="alert alert-success">
+                                    <strong>Selected:</strong> {{uiTranslatesCtrl.selectedLanguage.name}} ({{uiTranslatesCtrl.selectedLanguage.nativeName}}) - {{uiTranslatesCtrl.selectedLanguage.code}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div ng-if="uiTranslatesCtrl.addingLanguage">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <h5>Adding Language: <strong>{{uiTranslatesCtrl.selectedLanguage.name}} ({{uiTranslatesCtrl.selectedLanguage.code}})</strong></h5>
+                                
+                                <div class="alert alert-info">
+                                    <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i>
+                                    Creating language document...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeAddLanguageModal()" ng-disabled="uiTranslatesCtrl.addingLanguage">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.addLanguageToProject()" ng-disabled="!uiTranslatesCtrl.selectedLanguage || uiTranslatesCtrl.addingLanguage" ng-if="uiTranslatesCtrl.availableLanguages.length > 0">
+                        <span ng-if="!uiTranslatesCtrl.addingLanguage">
+                            <i class="glyphicon glyphicon-plus"></i> Add Language
+                        </span>
+                        <span ng-if="uiTranslatesCtrl.addingLanguage">
+                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Adding...
                         </span>
                     </button>
                 </div>

@@ -2,6 +2,16 @@ const config = require('../libs/config');
 const jwt = require('jsonwebtoken');
 
 module.exports = function(req, res, next) {
+  // Allow common languages endpoint to be public (with or without query parameters)
+  if (req.url.startsWith('/api/uitranslate/common-languages')) {
+    return next();
+  }
+
+  // Allow sync progress endpoint to be public for polling
+  if (req.url.startsWith('/api/uitranslate/sync-progress/')) {
+    return next();
+  }
+
   const token = (req.headers['x-access-token']);
 
   if (token) {

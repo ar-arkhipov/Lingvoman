@@ -28,6 +28,8 @@ router.post('/api/uitranslate/sync', api.uiTranslationsSync);
 // NEW FLEXIBLE LANGUAGE-AGNOSTIC TRANSLATION ENDPOINTS
 //get available languages for a project
 router.get('/api/uitranslate/languages/:projectID', api.uiTranslationsGetLanguages);
+//add new language to project
+router.post('/api/uitranslate/add-language', api.uiTranslationsAddLanguage);
 //get unsynchronized translation info for a project
 router.get('/api/uitranslate/unsync-info/:projectID', api.uiTranslationsGetUnsyncInfo);
 //start flexible translation sync to any target language

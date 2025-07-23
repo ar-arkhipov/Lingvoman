@@ -146,13 +146,13 @@ ${JSON.stringify(
             )}`;
 
             const response = await this.openai.chat.completions.create({
-                model: 'gpt-3.5-turbo',
+                model: 'gpt-4.1-mini',
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }
                 ],
                 temperature: 0.1,
-                max_tokens: 2000
+                max_tokens: 20000
             });
 
             const content = response.choices[0].message.content.trim();

@@ -339,6 +339,86 @@ const api = {
         }
     },
 
+    /**
+     * Add a new language to an existing project
+     * POST /api/uitranslate/add-language
+     * Body: { projectID, projectAlphaId, targetLocale }
+     */
+    async uiTranslationsAddLanguage(req, res) {
+        try {
+            const { projectID, projectAlphaId, targetLocale } = req.body;
+            
+            if (!projectID || !projectAlphaId || !targetLocale) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Bad request: projectID, projectAlphaId, and targetLocale are required'
+                });
+            }
+
+            // Validate locale format
+            if (!languageService.isValidLocaleFormat(targetLocale)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: `Invalid target locale format: ${targetLocale}. Expected format: 'xx' or 'xx-XX'`
+                });
+            }
+
+            // Check if the project exists
+            const existingProject = await UiTran.findOne({ 
+                projectID: parseInt(projectID) 
+            });
+
+            if (!existingProject) {
+                return res.status(404).json({
+                    status: 'error',
+                    message: `Project ${projectID} not found`
+                });
+            }
+
+            // Check if language already exists for this project
+            const existingLanguage = await UiTran.findOne({
+                projectID: parseInt(projectID),
+                locale: targetLocale
+            });
+
+            if (existingLanguage) {
+                return res.status(409).json({
+                    status: 'error',
+                    message: `Language ${targetLocale} already exists for project ${projectID}`
+                });
+            }
+
+            // Create new empty language document
+            const newLanguageDoc = {
+                projectID: parseInt(projectID),
+                projectAlphaId,
+                locale: targetLocale,
+                translations: {}
+            };
+
+            const createdDoc = await UiTran.create(newLanguageDoc);
+
+            res.status(200).json({
+                status: 'success',
+                message: `Language ${targetLocale} successfully added to project ${projectAlphaId}`,
+                data: {
+                    projectID: parseInt(projectID),
+                    projectAlphaId,
+                    locale: targetLocale,
+                    documentId: createdDoc._id
+                }
+            });
+
+        } catch (error) {
+            console.error('Error adding language:', error);
+            res.status(500).json({
+                status: 'error',
+                message: 'Failed to add language',
+                error: error.message
+            });
+        }
+    },
+
     async uiTranslationsBackupGetList(req, res) {
         try {
             const data = await UiReservedTran.aggregate([

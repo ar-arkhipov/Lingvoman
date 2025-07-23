@@ -133,50 +133,52 @@ class FlexibleTranslationSyncService {
                 return;
             }
 
-            // Step 4: Translate missing sections with progress tracking
+            // Step 4: Translate missing sections with immediate saving
             const missingSections = this.buildMissingSections(sourceDoc.translations, missingInfo);
+            const sectionKeys = Object.keys(missingSections);
+            const translatedSections = {};
+            let processedSections = 0;
             
             progressTracker.updateProgress(jobId, {
                 progress: 40,
                 step: 'Starting translation',
-                message: `Translating ${missingInfo.totalMissingKeys} keys in ${Object.keys(missingSections).length} sections`
+                message: `Translating ${missingInfo.totalMissingKeys} keys in ${sectionKeys.length} sections`
             });
 
-            const translatedSections = await this.openaiService.translateSections(
-                missingSections,
-                targetLocale,
-                `Project: ${projectAlphaId} (ID: ${projectID})`,
-                (progressUpdate) => {
-                    // Update progress: 40% to 80% for translation
-                    const translationProgress = 40 + (progressUpdate.progress * 0.4);
-                    progressTracker.updateProgress(jobId, {
-                        progress: Math.round(translationProgress),
-                        step: progressUpdate.step,
-                        message: `${progressUpdate.step} (${progressUpdate.processedSections}/${progressUpdate.totalSections})`
-                    });
-                }
-            );
+            // Translate and save each section immediately
+            for (const sectionKey of sectionKeys) {
+                const sectionContent = missingSections[sectionKey];
+                console.log(`Translating section: ${sectionKey} to ${targetLocale}`);
+                
+                // Update progress
+                const translationProgress = 40 + ((processedSections / sectionKeys.length) * 40);
+                progressTracker.updateProgress(jobId, {
+                    progress: Math.round(translationProgress),
+                    step: `Translating section: ${sectionKey}`,
+                    message: `Translating section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
+                });
+                
+                // Translate the section
+                const translatedContent = await this.openaiService.translateSection(
+                    sectionContent, 
+                    targetLocale,
+                    `UI section: ${sectionKey}. Project: ${projectAlphaId} (ID: ${projectID})`
+                );
+                
+                translatedSections[sectionKey] = translatedContent;
+                
+                // Save immediately
+                await this.saveSectionImmediately(projectID, targetLocale, targetDoc, sectionKey, translatedContent);
+                
+                processedSections++;
+            }
 
-            // Step 5: Merge translations into target document
-            progressTracker.updateProgress(jobId, {
-                progress: 85,
-                step: 'Merging translations',
-                message: 'Updating target document with new translations'
-            });
-
-            const updatedTranslations = this.mergeTranslations(
-                targetDoc.translations || {},
-                translatedSections
-            );
-
-            // Step 6: Update database
+            // Step 5: Final database sync (sections are already saved individually)
             progressTracker.updateProgress(jobId, {
                 progress: 90,
-                step: 'Saving to database',
-                message: 'Saving updated translations'
+                step: 'Finalizing translations',
+                message: 'All sections saved individually during translation'
             });
-
-            await this.updateDocument(projectID, targetLocale, updatedTranslations);
 
             // Complete
             progressTracker.updateProgress(jobId, {
@@ -323,6 +325,36 @@ class FlexibleTranslationSyncService {
             return result;
         } catch (error) {
             console.error('Error updating document:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Save a single section of translations immediately to the database.
+     * This is useful for immediate feedback and to avoid losing translations
+     * if the process crashes after translation but before final save.
+     * @param {number} projectID - Project ID
+     * @param {string} locale - Locale code
+     * @param {Object} targetDoc - The current target document
+     * @param {string} sectionKey - The key of the section to save
+     * @param {Object} translatedContent - The translated content for the section
+     * @returns {Promise<void>}
+     */
+    async saveSectionImmediately(projectID, locale, targetDoc, sectionKey, translatedContent) {
+        try {
+            const updatedTranslations = {
+                ...targetDoc.translations,
+                [sectionKey]: translatedContent
+            };
+            
+            await this.updateDocument(projectID, locale, updatedTranslations);
+            
+            // Update the target document reference to keep it current
+            targetDoc.translations = updatedTranslations;
+            
+            console.log(`Saved section ${sectionKey} for ${locale} document for project ${projectID}`);
+        } catch (error) {
+            console.error(`Error saving section ${sectionKey} for ${locale} document:`, error);
             throw error;
         }
     }
