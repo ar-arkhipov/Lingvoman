@@ -24,6 +24,7 @@ class FlexibleTranslationSyncService {
         // Auto-detect source language if not provided
         if (!sourceLocale) {
             const projectInfo = await languageService.getProjectLanguages(projectID);
+
             sourceLocale = projectInfo.sourceLanguage;
         }
 
@@ -84,6 +85,7 @@ class FlexibleTranslationSyncService {
             });
 
             const sourceDoc = await this.getDocument(projectID, sourceLocale);
+
             if (!sourceDoc) {
                 throw new Error(`Source document (${sourceLocale}) not found for project ${projectID}`);
             }
@@ -96,6 +98,7 @@ class FlexibleTranslationSyncService {
             });
 
             let targetDoc = await this.getDocument(projectID, targetLocale);
+
             if (!targetDoc) {
                 targetDoc = await this.createTargetDocument(projectID, projectAlphaId, targetLocale);
                 progressTracker.updateProgress(jobId, {
@@ -130,6 +133,7 @@ class FlexibleTranslationSyncService {
                         totalKeys: languageService.countTotalKeys(sourceDoc.translations)
                     }
                 });
+
                 return;
             }
 
@@ -148,10 +152,12 @@ class FlexibleTranslationSyncService {
             // Translate and save each section immediately
             for (const sectionKey of sectionKeys) {
                 const sectionContent = missingSections[sectionKey];
+
                 console.log(`Translating section: ${sectionKey} to ${targetLocale}`);
                 
                 // Update progress
                 const translationProgress = 40 + ((processedSections / sectionKeys.length) * 40);
+
                 progressTracker.updateProgress(jobId, {
                     progress: Math.round(translationProgress),
                     step: `Translating section: ${sectionKey}`,
@@ -190,7 +196,7 @@ class FlexibleTranslationSyncService {
                     translatedSections: Object.keys(translatedSections),
                     totalTranslatedKeys: missingInfo.totalMissingKeys,
                     skippedSections: Object.keys(sourceDoc.translations).filter(
-                        key => !translatedSections[key]
+                        (key) => !translatedSections[key]
                     ),
                     totalSections: Object.keys(sourceDoc.translations).length,
                     newTranslations: translatedSections
@@ -222,6 +228,7 @@ class FlexibleTranslationSyncService {
             } else {
                 // Partial section missing
                 const partialSection = {};
+
                 missingKeysInSection.forEach((key) => {
                     partialSection[key] = sourceSection[key];
                 });
@@ -242,8 +249,9 @@ class FlexibleTranslationSyncService {
         try {
             const doc = await UiTran.findOne({
                 projectID: parseInt(projectID),
-                locale: locale
+                locale
             });
+
             return doc;
         } catch (error) {
             console.error(`Error fetching document for ${projectID}/${locale}:`, error);
@@ -262,13 +270,15 @@ class FlexibleTranslationSyncService {
         try {
             const newDoc = {
                 projectID: parseInt(projectID),
-                projectAlphaId: projectAlphaId,
+                projectAlphaId,
                 locale: targetLocale,
                 translations: {}
             };
 
             const createdDoc = await UiTran.create(newDoc);
+
             console.log(`Created ${targetLocale} document for project ${projectID}`);
+
             return createdDoc;
         } catch (error) {
             console.error(`Error creating ${targetLocale} document:`, error);
@@ -312,16 +322,17 @@ class FlexibleTranslationSyncService {
         try {
             const query = {
                 projectID: parseInt(projectID),
-                locale: locale
+                locale
             };
 
             const result = await UiTran.updateOne(
                 query,
-                { $set: { translations: translations } },
+                { $set: { translations } },
                 { upsert: true }
             );
 
             console.log(`Updated ${locale} document for project ${projectID}`);
+
             return result;
         } catch (error) {
             console.error('Error updating document:', error);
@@ -371,6 +382,7 @@ class FlexibleTranslationSyncService {
             // Auto-detect source language if not provided
             if (!sourceLocale) {
                 const projectInfo = await languageService.getProjectLanguages(projectID);
+
                 sourceLocale = projectInfo.sourceLanguage;
             }
 

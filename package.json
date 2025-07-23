@@ -33,6 +33,8 @@
     "prod": "npm run build && npm run start:prod",
     "check": "node --check lingvoman.js",
     "check:syntax": "node --check lingvoman.js && node --check libs/config.js && node --check libs/mongoose.js",
+    "lint": "eslint . --config eslint.config.js",
+    "lint:fix": "eslint . --config eslint.config.js --fix",
     "version:node": "node --version",
     "version:npm": "npm --version",
     "version:check": "node --version && npm --version",

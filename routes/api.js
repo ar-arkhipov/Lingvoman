@@ -259,7 +259,7 @@ const api = {
             res.json({
                 status: 'success',
                 message: `Translation sync to ${targetLocale} started`,
-                jobId: jobId,
+                jobId,
                 pollUrl: `/api/uitranslate/sync-progress/${jobId}`
             });
 

@@ -31,6 +31,7 @@ class FlexibleOpenAIService {
 
             for (const sectionKey of sectionKeys) {
                 const sectionContent = sections[sectionKey];
+
                 console.log(`Translating section: ${sectionKey} to ${targetLocale}`);
                 
                 // Update progress
@@ -133,12 +134,13 @@ Return ONLY a JSON object with the translated texts, using the same keys as prov
             const userPrompt = `Translate these UI texts to the language with locale code "${targetLocale}".
 
 For context, here are the UI elements you're translating:
-${items.map(item => `- ${item.key}: "${item.text}" (${item.context})`).join('\n')}
+${items.map((item) => `- ${item.key}: "${item.text}" (${item.context})`).join('\n')}
 
 Return as JSON with translated text only (no context in output):
 ${JSON.stringify(
                 items.reduce((acc, item) => {
                     acc[item.key] = item.text;
+
                     return acc;
                 }, {}),
                 null,
@@ -158,6 +160,7 @@ ${JSON.stringify(
             const content = response.choices[0].message.content.trim();
             
             let translations;
+
             try {
                 translations = JSON.parse(content);
             } catch (parseError) {
@@ -198,6 +201,7 @@ ${JSON.stringify(
                 console.warn(`Placeholder mismatch in translation:
                     Original: ${original}
                     Translated: ${translated}`);
+
                 return false;
             }
         }

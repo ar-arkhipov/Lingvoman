@@ -39,6 +39,7 @@ class ProgressTracker {
         }, this.jobTimeout);
 
         console.log(`Created job ${jobId} for project ${jobData.projectID} → ${jobData.targetLocale}`);
+
         return jobId;
     }
 
@@ -49,8 +50,10 @@ class ProgressTracker {
      */
     updateProgress(jobId, update) {
         const job = this.jobs.get(jobId);
+
         if (!job) {
             console.warn(`Job ${jobId} not found for progress update`);
+
             return false;
         }
 
@@ -74,6 +77,7 @@ class ProgressTracker {
         }
 
         console.log(`Job ${jobId}: ${job.progress}% - ${update.message || job.message}`);
+
         return true;
     }
 
@@ -85,12 +89,14 @@ class ProgressTracker {
     getJobStatus(jobId) {
         // Check active jobs first
         const activeJob = this.jobs.get(jobId);
+
         if (activeJob) {
             return { ...activeJob };
         }
 
         // Check history
         const historyJob = this.jobHistory.get(jobId);
+
         if (historyJob) {
             return { ...historyJob };
         }
@@ -104,6 +110,7 @@ class ProgressTracker {
      */
     moveToHistory(jobId) {
         const job = this.jobs.get(jobId);
+
         if (job) {
             this.jobs.delete(jobId);
             this.jobHistory.set(jobId, job);
@@ -111,6 +118,7 @@ class ProgressTracker {
             // Cleanup old history if needed
             if (this.jobHistory.size > this.maxHistorySize) {
                 const oldestKey = this.jobHistory.keys().next().value;
+
                 this.jobHistory.delete(oldestKey);
             }
         }
@@ -122,6 +130,7 @@ class ProgressTracker {
      */
     cleanupJob(jobId) {
         const job = this.jobs.get(jobId);
+
         if (job && job.status === 'running') {
             this.updateProgress(jobId, {
                 status: 'failed',

@@ -1,9 +1,6 @@
 const config = require('./config.js');
 const mongoose = require('mongoose');
 
-console.log('---------------');
-console.log(config['mongouri']);
-console.log('---------------');
 mongoose.connect(config['mongouri']).then(() => {
 	console.log('Connected');
 }).catch((err) => {

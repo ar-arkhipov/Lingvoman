@@ -6,3 +6,4 @@ package-lock.json
 .idea
 .kiro
 tests
+.DS_Store

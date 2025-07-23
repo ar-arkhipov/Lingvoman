@@ -68,6 +68,7 @@ class LanguageService {
             // Auto-detect source language if not provided
             if (!sourceLocale) {
                 const projectInfo = await this.getProjectLanguages(projectID);
+
                 sourceLocale = projectInfo.sourceLanguage;
             }
 
@@ -128,7 +129,7 @@ class LanguageService {
                 },
                 targetLanguages,
                 unsyncedLanguages: Object.keys(targetLanguages).filter(
-                    locale => targetLanguages[locale].needsSync
+                    (locale) => targetLanguages[locale].needsSync
                 )
             };
 
@@ -199,6 +200,7 @@ class LanguageService {
         const totalTargetKeys = this.countTotalKeys(targetTranslations);
         
         if (totalSourceKeys === 0) return 100;
+
         return Math.round((totalTargetKeys / totalSourceKeys) * 100);
     }
 
@@ -209,11 +211,13 @@ class LanguageService {
      */
     countTotalKeys(translations) {
         let count = 0;
-        Object.values(translations).forEach(section => {
+
+        Object.values(translations).forEach((section) => {
             if (typeof section === 'object' && section !== null) {
                 count += Object.keys(section).length;
             }
         });
+
         return count;
     }
 
@@ -225,6 +229,7 @@ class LanguageService {
     isValidLocaleFormat(locale) {
         // Simple validation: 2-letter code or 2-letter with country variant
         const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/;
+
         return localePattern.test(locale);
     }
 }
