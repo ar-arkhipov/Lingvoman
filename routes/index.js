@@ -22,8 +22,21 @@ router.post('/api/uitranslate/item', api.uiTranslationsChange);
 router.delete('/api/uitranslate/item', api.uiTranslationsDelete);
 //creating fully new document (new id, loc, alphaId)
 router.put('/api/uitranslate/item', api.uiTranslationsCreate);
-//sync Japanese translations using OpenAI
+//sync Japanese translations using OpenAI (DEPRECATED - use flexible sync instead)
 router.post('/api/uitranslate/sync', api.uiTranslationsSync);
+
+// NEW FLEXIBLE LANGUAGE-AGNOSTIC TRANSLATION ENDPOINTS
+//get available languages for a project
+router.get('/api/uitranslate/languages/:projectID', api.uiTranslationsGetLanguages);
+//get unsynchronized translation info for a project
+router.get('/api/uitranslate/unsync-info/:projectID', api.uiTranslationsGetUnsyncInfo);
+//start flexible translation sync to any target language
+router.post('/api/uitranslate/sync-flexible', api.uiTranslationsFlexibleSync);
+//get translation sync progress (for long polling)
+router.get('/api/uitranslate/sync-progress/:jobId', api.uiTranslationsGetSyncProgress);
+//get sync status for a specific target locale
+router.get('/api/uitranslate/sync-status/:projectID/:targetLocale', api.uiTranslationsGetSyncStatus);
+
 //serve aggregated list of available translations in backup collection
 router.get('/api/uitranslate/backup', api.uiTranslationsBackupGetList);
 //backup the previous version of document from backup collection

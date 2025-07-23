@@ -47,11 +47,8 @@
                 </div>
                 <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
                 <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document</button>
-                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.syncJapanese()" ng-show="uiTranslatesCtrl.chosen" ng-disabled="uiTranslatesCtrl.syncInProgress">
-                    <span ng-if="!uiTranslatesCtrl.syncInProgress">Sync Japanese</span>
-                    <span ng-if="uiTranslatesCtrl.syncInProgress">
-                        <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Syncing...
-                    </span>
+                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()" ng-show="uiTranslatesCtrl.chosen">
+                    <i class="glyphicon glyphicon-globe" style="margin-right: 5px;"></i>Sync to Other Languages
                 </button>
             </form>
 
@@ -166,4 +163,168 @@
             {{growl.msg}}
         </alert>
     </div>
+
+    <!-- FLEXIBLE SYNC MODAL -->
+    <div class="modal" tabindex="-1" role="dialog" ng-show="uiTranslatesCtrl.showSyncModal" style="display: block;">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" ng-click="uiTranslatesCtrl.closeSyncModal()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <i class="glyphicon glyphicon-globe"></i> Sync to Other Languages
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID: {{uiTranslatesCtrl.chosen.projectID}})</p>
+                            </div>
+                        </div>
+
+                        <!-- Available Languages List -->
+                        <div class="row" ng-if="uiTranslatesCtrl.unsyncedInfo">
+                            <div class="col-md-12">
+                                <h5>Available Languages</h5>
+                                
+                                <!-- Languages with missing translations -->
+                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages" ng-if="langInfo.needsSync" class="panel panel-warning">
+                                    <div class="panel-heading" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;" ng-click="langInfo.expanded = !langInfo.expanded">
+                                        <div style="display: flex; align-items: center; flex-grow: 1;">
+                                            <i class="glyphicon" ng-class="{'glyphicon-chevron-down': langInfo.expanded, 'glyphicon-chevron-right': !langInfo.expanded}" style="margin-right: 8px;"></i>
+                                            <strong>{{locale | uppercase}}</strong> 
+                                            <span class="badge" style="margin-left: 10px;">{{langInfo.totalMissingKeys}} missing keys</span>
+                                            <div class="progress" style="width: 200px; margin-left: 15px; margin-bottom: 0;">
+                                                <div class="progress-bar progress-bar-warning text-center" style="width: {{langInfo.syncProgress}}%;">
+                                                    {{langInfo.syncProgress}}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-primary" ng-click="uiTranslatesCtrl.syncLanguage(locale, $event)" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress" style="margin-left: 15px;">
+                                            <i class="glyphicon glyphicon-refresh" ng-class="{'glyphicon-refresh-animate': uiTranslatesCtrl.syncingLanguages[locale]}" style="margin-right: 5px;"></i><span ng-if="!uiTranslatesCtrl.syncingLanguages[locale]">Sync</span><span ng-if="uiTranslatesCtrl.syncingLanguages[locale]">Syncing...</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Collapsible content showing missing sections -->
+                                    <div class="panel-body" ng-show="langInfo.expanded">
+                                        <!-- Debug info -->
+                                        <div class="alert alert-info" style="font-size: 11px; margin-bottom: 10px;">
+                                            <strong>Debug:</strong> 
+                                            Missing sections: {{langInfo.missingSections.length || 0}} | 
+                                            Missing keys object: {{Object.keys(langInfo.missingKeys || {}).length}} sections | 
+                                            Total missing: {{langInfo.totalMissingKeys}}
+                                        </div>
+                                        
+                                        <div ng-if="langInfo.missingSections && langInfo.missingSections.length > 0">
+                                            <h6><strong>Missing Sections ({{langInfo.missingSections.length}}):</strong></h6>
+                                            <div class="row">
+                                                <div class="col-md-6" ng-repeat="section in langInfo.missingSections">
+                                                    <div class="well well-sm">
+                                                        <strong>{{section}}</strong>
+                                                        <span class="badge">{{langInfo.missingKeys[section].length}} keys</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div ng-if="langInfo.missingKeys && Object.keys(langInfo.missingKeys).length > (langInfo.missingSections ? langInfo.missingSections.length : 0)">
+                                            <h6><strong>Sections with Missing Keys:</strong></h6>
+                                            <div ng-repeat="(sectionKey, missingKeys) in langInfo.missingKeys" ng-if="!langInfo.missingSections || langInfo.missingSections.indexOf(sectionKey) === -1">
+                                                <div class="well well-sm">
+                                                    <strong>{{sectionKey}}</strong>
+                                                    <span class="badge">{{missingKeys.length}} missing keys</span>
+                                                    <div class="small text-muted" style="margin-top: 5px;">
+                                                        Missing: {{missingKeys.join(', ')}}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div ng-if="(!langInfo.missingSections || langInfo.missingSections.length === 0) && (!langInfo.missingKeys || Object.keys(langInfo.missingKeys).length === 0)">
+                                            <div class="alert alert-warning">
+                                                No missing sections or keys data found, but totalMissingKeys is {{langInfo.totalMissingKeys}}.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Languages that are up to date -->
+                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages" ng-if="!langInfo.needsSync" class="panel panel-success">
+                                    <div class="panel-heading" style="display: flex; align-items: center;">
+                                        <div style="display: flex; align-items: center; flex-grow: 1;">
+                                            <i class="glyphicon glyphicon-ok" style="margin-right: 8px;"></i>
+                                            <strong>{{locale | uppercase}}</strong> 
+                                            <span class="badge badge-success" style="margin-left: 10px;">Up to date</span>
+                                            <div class="progress" style="width: 200px; margin-left: 15px; margin-bottom: 0;">
+                                                <div class="progress-bar progress-bar-success text-center" style="width: 100%;">
+                                                    100%
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Show message if no other languages -->
+                                <div ng-if="uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0 && Object.keys(uiTranslatesCtrl.unsyncedInfo.targetLanguages).length === 0" class="alert alert-info">
+                                    <i class="glyphicon glyphicon-info-sign"></i>
+                                    This project only has the source language ({{uiTranslatesCtrl.unsyncedInfo.sourceLocale | uppercase}}). 
+                                    Create translations in other languages first.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-if="!uiTranslatesCtrl.unsyncedInfo" class="text-center">
+                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Loading project languages...
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div ng-if="uiTranslatesCtrl.flexibleSyncInProgress">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>Translating to: <strong>{{uiTranslatesCtrl.currentTargetLocale}}</strong></h5>
+                                
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-info progress-bar-striped active" 
+                                         role="progressbar" 
+                                         ng-style="{width: uiTranslatesCtrl.syncProgress + '%'}">
+                                        {{uiTranslatesCtrl.syncProgress}}%
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <strong>Step:</strong> {{uiTranslatesCtrl.syncStep}}<br>
+                                    <strong>Status:</strong> {{uiTranslatesCtrl.syncMessage}}
+                                </div>
+
+                                <div ng-if="uiTranslatesCtrl.currentJobId" class="small text-muted">
+                                    Job ID: {{uiTranslatesCtrl.currentJobId}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeSyncModal()" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress">
+                        <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">Close</span>
+                        <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">Hide</span>
+                    </button>
+                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.syncAllLanguages()" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !uiTranslatesCtrl.unsyncedInfo || uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0" ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length > 0">
+                        <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">
+                            <i class="glyphicon glyphicon-refresh"></i> Sync All Languages
+                        </span>
+                        <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">
+                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Syncing All...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal backdrop -->
+    <div class="modal-backdrop fade in" ng-show="uiTranslatesCtrl.showSyncModal"></div>
 </div>

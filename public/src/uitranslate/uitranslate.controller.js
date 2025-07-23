@@ -16,6 +16,17 @@
         vm.copiesList = [];
         vm.syncInProgress = false;
         vm.syncResult = null;
+        
+        // NEW FLEXIBLE SYNC MODAL VARIABLES
+        vm.showSyncModal = false;
+        vm.flexibleSyncInProgress = false;
+        vm.currentJobId = null;
+        vm.syncProgress = 0;
+        vm.syncStep = '';
+        vm.syncMessage = '';
+        vm.currentTargetLocale = '';
+        vm.unsyncedInfo = null;
+        vm.syncingLanguages = {};
 
 //resource list
         var initial = $resource('/api/uitranslate/list');
@@ -24,6 +35,12 @@
         });
         var restore = $resource('/api/uitranslate/backup');
         var sync = $resource('/api/uitranslate/sync');
+        
+        // NEW FLEXIBLE TRANSLATION RESOURCES
+        var flexibleSync = $resource('/api/uitranslate/sync-flexible');
+        var syncProgress = $resource('/api/uitranslate/sync-progress/:jobId', {jobId: '@jobId'});
+        var projectLanguages = $resource('/api/uitranslate/languages/:projectID', {projectID: '@projectID'});
+        var unsyncInfo = $resource('/api/uitranslate/unsync-info/:projectID', {projectID: '@projectID'});
 
 //receiving information about available translations (id, locale)
         vm.init = function () {
@@ -140,6 +157,264 @@
                 });
             });
         };
+
+        // NEW FLEXIBLE TRANSLATION SYNC FUNCTIONS
+
+        /**
+         * Open the flexible sync modal
+         */
+        vm.openSyncModal = function () {
+            if (!vm.chosen) {
+                $rootScope.$broadcast('growl', {
+                    type: 'danger',
+                    msg: 'Please select a project first'
+                });
+                return;
+            }
+
+            vm.showSyncModal = true;
+            vm.unsyncedInfo = null;
+            vm.loadUnsyncInfo();
+        };
+
+        /**
+         * Close the flexible sync modal
+         */
+        vm.closeSyncModal = function () {
+            vm.showSyncModal = false;
+            vm.flexibleSyncInProgress = false;
+            vm.currentJobId = null;
+            vm.syncProgress = 0;
+            vm.syncStep = '';
+            vm.syncMessage = '';
+            vm.currentTargetLocale = '';
+            vm.syncingLanguages = {};
+        };
+
+        /**
+         * Load unsync information for the current project
+         */
+        vm.loadUnsyncInfo = function () {
+            if (!vm.chosen) return;
+
+            unsyncInfo.get({
+                projectID: vm.chosen.projectID
+            }).$promise.then(function (response) {
+                vm.unsyncedInfo = response.data;
+                console.log('Unsync info:', vm.unsyncedInfo);
+            }).catch(function (error) {
+                console.error('Error loading unsync info:', error);
+                $rootScope.$broadcast('growl', {
+                    type: 'danger',
+                    msg: 'Failed to load language information'
+                });
+            });
+        };
+
+        /**
+         * Sync a specific language
+         */
+        vm.syncLanguage = function (targetLocale, $event) {
+            if ($event) {
+                $event.stopPropagation();
+            }
+
+            vm.syncingLanguages[targetLocale] = true;
+            vm.currentTargetLocale = targetLocale;
+
+            var syncData = {
+                projectID: vm.chosen.projectID,
+                projectAlphaId: vm.chosen.projectAlphaId,
+                targetLocale: targetLocale,
+                sourceLocale: vm.unsyncedInfo.sourceLocale
+            };
+
+            console.log('Starting language sync:', syncData);
+
+            flexibleSync.save(syncData).$promise.then(function (response) {
+                console.log('Language sync started:', response);
+                
+                if (response.status === 'success') {
+                    vm.currentJobId = response.jobId;
+                    vm.syncMessage = response.message;
+                    vm.flexibleSyncInProgress = true;
+                    vm.startProgressPolling();
+                } else {
+                    vm.syncingLanguages[targetLocale] = false;
+                    $rootScope.$broadcast('growl', {
+                        type: 'danger',
+                        msg: 'Failed to start sync: ' + response.message
+                    });
+                }
+            }).catch(function (error) {
+                console.error('Language sync error:', error);
+                vm.syncingLanguages[targetLocale] = false;
+                $rootScope.$broadcast('growl', {
+                    type: 'danger',
+                    msg: 'Failed to start sync: ' + (error.data && error.data.message ? error.data.message : 'Network error')
+                });
+            });
+        };
+
+        /**
+         * Sync all languages that need syncing
+         */
+        vm.syncAllLanguages = function () {
+            if (!vm.unsyncedInfo || vm.unsyncedInfo.unsyncedLanguages.length === 0) {
+                return;
+            }
+
+            vm.flexibleSyncInProgress = true;
+            var languagesToSync = vm.unsyncedInfo.unsyncedLanguages.slice();
+            var currentIndex = 0;
+
+            var syncNextLanguage = function () {
+                if (currentIndex >= languagesToSync.length) {
+                    vm.flexibleSyncInProgress = false;
+                    $rootScope.$broadcast('growl', {
+                        type: 'success',
+                        msg: 'All languages synced successfully!'
+                    });
+                    vm.loadUnsyncInfo(); // Refresh the list
+                    return;
+                }
+
+                var targetLocale = languagesToSync[currentIndex];
+                vm.currentTargetLocale = targetLocale;
+                vm.syncingLanguages[targetLocale] = true;
+
+                var syncData = {
+                    projectID: vm.chosen.projectID,
+                    projectAlphaId: vm.chosen.projectAlphaId,
+                    targetLocale: targetLocale,
+                    sourceLocale: vm.unsyncedInfo.sourceLocale
+                };
+
+                flexibleSync.save(syncData).$promise.then(function (response) {
+                    if (response.status === 'success') {
+                        vm.currentJobId = response.jobId;
+                        // Wait for this job to complete before starting next
+                        vm.waitForJobCompletion(response.jobId, function () {
+                            vm.syncingLanguages[targetLocale] = false;
+                            currentIndex++;
+                            syncNextLanguage();
+                        });
+                    } else {
+                        vm.syncingLanguages[targetLocale] = false;
+                        currentIndex++;
+                        syncNextLanguage();
+                    }
+                }).catch(function (error) {
+                    vm.syncingLanguages[targetLocale] = false;
+                    currentIndex++;
+                    syncNextLanguage();
+                });
+            };
+
+            syncNextLanguage();
+        };
+
+        /**
+         * Sync a specific section (placeholder for future implementation)
+         */
+
+
+        /**
+         * Start progress polling for the current job
+         */
+        vm.startProgressPolling = function () {
+            if (!vm.currentJobId) return;
+
+            var pollProgress = function () {
+                syncProgress.get({
+                    jobId: vm.currentJobId
+                }).$promise.then(function (response) {
+                    if (response.status === 'success') {
+                        var jobData = response.data;
+                        vm.syncProgress = jobData.progress || 0;
+                        vm.syncStep = jobData.step || '';
+                        vm.syncMessage = jobData.message || '';
+
+                        console.log('Progress update:', jobData);
+
+                        if (jobData.status === 'completed') {
+                            vm.flexibleSyncInProgress = false;
+                            vm.syncProgress = 100;
+                            vm.syncStep = 'Completed';
+                            vm.syncMessage = 'Translation sync completed successfully!';
+                            vm.syncingLanguages[vm.currentTargetLocale] = false;
+
+                            $rootScope.$broadcast('growl', {
+                                type: 'success',
+                                msg: 'Translation to ' + vm.currentTargetLocale + ' completed successfully!'
+                            });
+
+                            // Refresh the unsync info
+                            vm.loadUnsyncInfo();
+
+                            // Refresh the current view if we're looking at translations
+                            if (vm.data.length > 0) {
+                                $timeout(function () {
+                                    vm.getTrans();
+                                }, 1000);
+                            }
+
+                        } else if (jobData.status === 'failed') {
+                            vm.flexibleSyncInProgress = false;
+                            vm.syncStep = 'Failed';
+                            vm.syncMessage = jobData.error || 'Translation sync failed';
+                            vm.syncingLanguages[vm.currentTargetLocale] = false;
+
+                            $rootScope.$broadcast('growl', {
+                                type: 'danger',
+                                msg: 'Translation sync failed: ' + (jobData.error || 'Unknown error')
+                            });
+
+                        } else if (jobData.status === 'running' || jobData.status === 'pending') {
+                            // Continue polling
+                            $timeout(pollProgress, 2000);
+                        }
+                    }
+                }).catch(function (error) {
+                    console.error('Progress polling error:', error);
+                    vm.flexibleSyncInProgress = false;
+                    vm.syncStep = 'Error';
+                    vm.syncMessage = 'Failed to get progress updates';
+                });
+            };
+
+            // Start polling
+            pollProgress();
+        };
+
+        /**
+         * Wait for job completion (for sync all functionality)
+         */
+        vm.waitForJobCompletion = function (jobId, callback) {
+            var pollForCompletion = function () {
+                syncProgress.get({
+                    jobId: jobId
+                }).$promise.then(function (response) {
+                    if (response.status === 'success') {
+                        var jobData = response.data;
+                        
+                        if (jobData.status === 'completed' || jobData.status === 'failed') {
+                            callback();
+                        } else {
+                            $timeout(pollForCompletion, 2000);
+                        }
+                    } else {
+                        callback(); // Continue anyway
+                    }
+                }).catch(function (error) {
+                    callback(); // Continue anyway
+                });
+            };
+
+            pollForCompletion();
+        };
+
+
 
 //save changes
         vm.changeTranslation = function (item) {
