@@ -1,3 +1,11 @@
+/* Ensure modals and backdrops are above other content */
+.modal {
+  z-index: 1050;
+  display: block;
+}
+.modal-backdrop {
+  z-index: 1040;
+}
 /* Custom styles for Lingvoman */
 
 /* Spinning animation for sync button */

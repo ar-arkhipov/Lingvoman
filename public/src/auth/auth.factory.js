@@ -28,7 +28,11 @@
     function UserAuthFactory($window, $resource, Auth) {
         return {
             login: function(username, password) {
-                var loginRes = $resource('/login');
+                var loginRes = $resource('/login', {}, {
+                    save: {
+                        method: 'POST'
+                    }
+                });
 
                 return loginRes.save({
                     username: username,

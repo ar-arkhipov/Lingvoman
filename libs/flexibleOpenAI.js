@@ -6,13 +6,15 @@ const config = require('./config.js');
 
 class FlexibleOpenAIService {
     constructor() {
-        if (!config.openaiApiKey) {
-            throw new Error('OPENAI_API_KEY environment variable is required');
-        }
+        this.isEnabled = !!config.openaiApiKey;
         
-        this.openai = new OpenAI({
-            apiKey: config.openaiApiKey
-        });
+        if (this.isEnabled) {
+            this.openai = new OpenAI({
+                apiKey: config.openaiApiKey
+            });
+        } else {
+            console.warn('OpenAI API key not provided. Translation features will be disabled.');
+        }
     }
 
     /**
@@ -24,6 +26,10 @@ class FlexibleOpenAIService {
      * @returns {Promise<Object>} Translated sections
      */
     async translateSections(sections, targetLocale, context = '', progressCallback = null) {
+        if (!this.isEnabled) {
+            throw new Error('OpenAI API key not configured. Translation features are disabled.');
+        }
+        
         try {
             const sectionKeys = Object.keys(sections);
             const translatedSections = {};
@@ -80,6 +86,10 @@ class FlexibleOpenAIService {
      * @returns {Promise<Object>} Translated section
      */
     async translateSection(section, targetLocale, context) {
+        if (!this.isEnabled) {
+            throw new Error('OpenAI API key not configured. Translation features are disabled.');
+        }
+        
         if (typeof section !== 'object' || section === null) {
             throw new Error('Section must be an object');
         }
@@ -110,6 +120,10 @@ class FlexibleOpenAIService {
      * @returns {Promise<Array>} Translated items
      */
     async batchTranslate(items, targetLocale, globalContext = '') {
+        if (!this.isEnabled) {
+            throw new Error('OpenAI API key not configured. Translation features are disabled.');
+        }
+        
         try {
             const systemPrompt = `You are a professional UI/UX translator specializing in software interfaces.
 

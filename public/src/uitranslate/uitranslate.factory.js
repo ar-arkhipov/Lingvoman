@@ -98,14 +98,17 @@
                 return trans.query({projectID: projectID, locale: locale}).$promise.then(function(response) {
                     console.log('Translation response:', response);
                     // Handle both array and object responses
-                    if (Array.isArray(response)) {
-                        return response;
-                    } else if (response && Array.isArray(response.data)) {
-                        return response.data;
-                    } else {
-                        console.warn('Unexpected response format:', response);
-                        return [];
+                    if (!Array.isArray(response)) {
+                        return [response];
                     }
+                    // if (Array.isArray(response)) {
+                    //     return response;
+                    // } else if (response && Array.isArray(response)) {
+                    //     return response;
+                    // } else {
+                    //     console.warn('Unexpected response format:', response);
+                    //     return [];
+                    // }
                 }).catch(function(error) {
                     console.error('Translation fetch error:', error);
                     return [];
@@ -177,18 +180,23 @@
             getUnsyncInfo: function(projectID) {
                 return unsyncInfo.query({projectID: projectID}).$promise.then(function(response) {
                     console.log('Unsync info response:', response);
-                    // Handle both array and object responses
+                    // If response is array, return as is
                     if (Array.isArray(response)) {
                         return response;
-                    } else if (response && Array.isArray(response.data)) {
-                        return response.data;
-                    } else {
-                        console.warn('Unexpected unsync info response format:', response);
-                        return [];
                     }
+                    // If response has data property as array, return that
+                    if (response && Array.isArray(response.data)) {
+                        return response.data;
+                    }
+                    // If response is an object, return the object itself
+                    if (response && typeof response === 'object') {
+                        return response;
+                    }
+                    console.warn('Unexpected unsync info response format:', response);
+                    return {};
                 }).catch(function(error) {
                     console.error('Unsync info fetch error:', error);
-                    return [];
+                    return {};
                 });
             },
 

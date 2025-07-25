@@ -154,28 +154,46 @@ class FlexibleTranslationSyncService {
                 const sectionContent = missingSections[sectionKey];
 
                 console.log(`Translating section: ${sectionKey} to ${targetLocale}`);
-                
-                // Update progress
-                const translationProgress = 40 + ((processedSections / sectionKeys.length) * 40);
+
+                // Update progress before translation
+                const translationProgressStart = 40 + ((processedSections / sectionKeys.length) * 40);
 
                 progressTracker.updateProgress(jobId, {
-                    progress: Math.round(translationProgress),
+                    progress: Math.round(translationProgressStart),
                     step: `Translating section: ${sectionKey}`,
-                    message: `Translating section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
+                    message: `Starting translation for section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
                 });
-                
+
                 // Translate the section
                 const translatedContent = await this.openaiService.translateSection(
                     sectionContent, 
                     targetLocale,
                     `UI section: ${sectionKey}. Project: ${projectAlphaId} (ID: ${projectID})`
                 );
-                
+
+                // Update progress after translation
+                const translationProgressEnd = 40 + (((processedSections + 0.5) / sectionKeys.length) * 40);
+
+                progressTracker.updateProgress(jobId, {
+                    progress: Math.round(translationProgressEnd),
+                    step: `Saving section: ${sectionKey}`,
+                    message: `Saving translated section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
+                });
+
                 translatedSections[sectionKey] = translatedContent;
-                
+
                 // Save immediately
                 await this.saveSectionImmediately(projectID, targetLocale, targetDoc, sectionKey, translatedContent);
-                
+
+                // Update progress after saving
+                const translationProgressSaved = 40 + (((processedSections + 1) / sectionKeys.length) * 40);
+
+                progressTracker.updateProgress(jobId, {
+                    progress: Math.round(translationProgressSaved),
+                    step: `Section saved: ${sectionKey}`,
+                    message: `Section ${sectionKey} saved (${processedSections + 1}/${sectionKeys.length})`
+                });
+
                 processedSections++;
             }
 

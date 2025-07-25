@@ -43,7 +43,7 @@ const api = {
 
     async uiTranslationsGetList(req, res) {
         try {
-            const data = await UiTran.aggregate([
+            const [data] = await UiTran.aggregate([
                 {$group:{
                     _id:{projectID:'$projectID', alpha:'$projectAlphaId'},
                     locales: {$addToSet : '$locale'}}
@@ -207,7 +207,7 @@ const api = {
             const projectID = req.params.projectID;
             const sourceLocale = req.query.sourceLocale || null;
             const unsyncInfo = await languageService.getUnsyncInfo(projectID, sourceLocale);
-            
+
             res.status(200);
             res.json({
                 status: 'success',

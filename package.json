@@ -7,19 +7,24 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "dotenv": "17.2.0",
     "express": "4.21.2",
+    "express-rate-limit": "^8.0.1",
+    "express-validator": "^7.2.1",
     "gulp": "5.0.1",
     "gulp-concat": "2.6.1",
     "gulp-ng-annotate": "^0.2.0",
     "gulp-uglify": "3.0.2",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
     "jsonwebtoken": "9.0.2",
     "method-override": "3.0.0",
     "mongoose": "8.12.0",
     "morgan": "1.10.0",
     "nconf": "0.12.1",
     "openai": "^5.10.2",
-    "winston": "3.17.0"
+    "winston": "^3.17.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -42,7 +47,8 @@
     "clean": "npm run build:clean && rm -rf node_modules && cd client && rm -rf node_modules",
     "prestart": "npm run check",
     "prestart:dev": "npm run check",
-    "prestart:prod": "npm run check"
+    "prestart:prod": "npm run check",
+    "zaibalo": "npm run build:watch | npm run start:dev"
   },
   "repository": {
     "type": "git",

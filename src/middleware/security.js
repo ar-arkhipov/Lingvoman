@@ -93,14 +93,14 @@ const createRateLimit = (windowMs, max, message, skipSuccessfulRequests = false)
 // General API rate limit
 const generalRateLimit = createRateLimit(
     15 * 60 * 1000, // 15 minutes
-    100, // 100 requests per window
+    1000, // 1000 requests per window
     'Too many requests, please try again later.'
 );
 
 // Strict rate limit for authentication endpoints
 const authRateLimit = createRateLimit(
     15 * 60 * 1000, // 15 minutes
-    5, // 5 login attempts per window
+    15, // 15 login attempts per window
     'Too many login attempts, please try again later.',
     true // Don't count successful requests
 );
@@ -108,7 +108,7 @@ const authRateLimit = createRateLimit(
 // Rate limit for translation sync (resource intensive)
 const syncRateLimit = createRateLimit(
     60 * 60 * 1000, // 1 hour
-    10, // 10 sync requests per hour
+    1000, // 1000 sync requests per hour
     'Too many sync requests, please try again later.'
 );
 

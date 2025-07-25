@@ -168,7 +168,7 @@
     </div>
 
     <!-- FLEXIBLE SYNC MODAL -->
-    <div class="modal" tabindex="-1" role="dialog" ng-show="uiTranslatesCtrl.showSyncModal" style="display: block;">
+    <div class="modal" tabindex="-1" role="dialog" ng-if="uiTranslatesCtrl.showSyncModal">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -191,16 +191,16 @@
                         <div class="row" ng-if="uiTranslatesCtrl.unsyncedInfo">
                             <div class="col-md-12">
                                 <h5>Available Languages</h5>
-                                
+
                                 <!-- Languages with missing translations -->
                                 <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages" ng-if="langInfo.needsSync" class="panel panel-warning">
                                     <div class="panel-heading" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;" ng-click="langInfo.expanded = !langInfo.expanded">
                                         <div style="display: flex; align-items: center; flex-grow: 1;">
                                             <i class="glyphicon" ng-class="{'glyphicon-chevron-down': langInfo.expanded, 'glyphicon-chevron-right': !langInfo.expanded}" style="margin-right: 8px;"></i>
-                                            <strong>{{locale | uppercase}}</strong> 
+                                            <strong>{{locale | uppercase}}</strong>
                                             <span class="badge" style="margin-left: 10px;">{{langInfo.totalMissingKeys}} missing keys</span>
                                             <div class="progress" style="width: 200px; margin-left: 15px; margin-bottom: 0;">
-                                                <div class="progress-bar progress-bar-warning text-center" style="width: {{langInfo.syncProgress}}%;">
+                                                <div class="progress-bar progress-bar-warning text-center" ng-style="{width: langInfo.syncProgress + '%'}">
                                                     {{langInfo.syncProgress}}%
                                                 </div>
                                             </div>
@@ -209,17 +209,17 @@
                                             <i class="glyphicon glyphicon-refresh" ng-class="{'glyphicon-refresh-animate': uiTranslatesCtrl.syncingLanguages[locale]}" style="margin-right: 5px;"></i><span ng-if="!uiTranslatesCtrl.syncingLanguages[locale]">Sync</span><span ng-if="uiTranslatesCtrl.syncingLanguages[locale]">Syncing...</span>
                                         </button>
                                     </div>
-                                    
+
                                     <!-- Collapsible content showing missing sections -->
                                     <div class="panel-body" ng-show="langInfo.expanded">
                                         <!-- Debug info -->
                                         <div class="alert alert-info" style="font-size: 11px; margin-bottom: 10px;">
-                                            <strong>Debug:</strong> 
-                                            Missing sections: {{langInfo.missingSections.length || 0}} | 
-                                            Missing keys object: {{Object.keys(langInfo.missingKeys || {}).length}} sections | 
+                                            <strong>Debug:</strong>
+                                            Missing sections: {{langInfo.missingSections.length || 0}} |
+                                            Missing keys object: {{Object.keys(langInfo.missingKeys || {}).length}} sections |
                                             Total missing: {{langInfo.totalMissingKeys}}
                                         </div>
-                                        
+
                                         <div ng-if="langInfo.missingSections && langInfo.missingSections.length > 0">
                                             <h6><strong>Missing Sections ({{langInfo.missingSections.length}}):</strong></h6>
                                             <div class="row">
@@ -231,7 +231,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div ng-if="langInfo.missingKeys && Object.keys(langInfo.missingKeys).length > (langInfo.missingSections ? langInfo.missingSections.length : 0)">
                                             <h6><strong>Sections with Missing Keys:</strong></h6>
                                             <div ng-repeat="(sectionKey, missingKeys) in langInfo.missingKeys" ng-if="!langInfo.missingSections || langInfo.missingSections.indexOf(sectionKey) === -1">
@@ -244,7 +244,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div ng-if="(!langInfo.missingSections || langInfo.missingSections.length === 0) && (!langInfo.missingKeys || Object.keys(langInfo.missingKeys).length === 0)">
                                             <div class="alert alert-warning">
                                                 No missing sections or keys data found, but totalMissingKeys is {{langInfo.totalMissingKeys}}.
@@ -258,7 +258,7 @@
                                     <div class="panel-heading" style="display: flex; align-items: center;">
                                         <div style="display: flex; align-items: center; flex-grow: 1;">
                                             <i class="glyphicon glyphicon-ok" style="margin-right: 8px;"></i>
-                                            <strong>{{locale | uppercase}}</strong> 
+                                            <strong>{{locale | uppercase}}</strong>
                                             <span class="badge badge-success" style="margin-left: 10px;">Up to date</span>
                                             <div class="progress" style="width: 200px; margin-left: 15px; margin-bottom: 0;">
                                                 <div class="progress-bar progress-bar-success text-center" style="width: 100%;">
@@ -270,9 +270,9 @@
                                 </div>
 
                                 <!-- Show message if no other languages -->
-                                <div ng-if="uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0 && Object.keys(uiTranslatesCtrl.unsyncedInfo.targetLanguages).length === 0" class="alert alert-info">
+                                <div ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0 && uiTranslatesCtrl.unsyncedInfo.targetLanguages && Object.keys(uiTranslatesCtrl.unsyncedInfo.targetLanguages).length === 0" class="alert alert-info">
                                     <i class="glyphicon glyphicon-info-sign"></i>
-                                    This project only has the source language ({{uiTranslatesCtrl.unsyncedInfo.sourceLocale | uppercase}}). 
+                                    This project only has the source language ({{uiTranslatesCtrl.unsyncedInfo.sourceLocale | uppercase}}).
                                     Create translations in other languages first.
                                 </div>
                             </div>
@@ -291,27 +291,28 @@
                                     <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate" style="margin-right: 8px;"></i>
                                     Translating to <strong>{{uiTranslatesCtrl.getLanguageName(uiTranslatesCtrl.currentTargetLocale)}}</strong>
                                 </h4>
-                                
+
                                 <div class="progress" style="height: 25px; margin-bottom: 15px;">
-                                    <div class="progress-bar progress-bar-info progress-bar-striped active" 
-                                         role="progressbar" 
+                                    <div class="progress-bar progress-bar-info progress-bar-striped active"
+                                         role="progressbar"
                                          ng-style="{width: uiTranslatesCtrl.syncProgress + '%'}"
-                                         style="line-height: 25px; font-weight: bold;">
-                                        {{uiTranslatesCtrl.syncProgress}}%
+                                         style="line-height: 25px; font-weight: bold; min-width: 40px;">
+                                        <span ng-if="uiTranslatesCtrl.syncProgress > 0">{{uiTranslatesCtrl.syncProgress}}%</span>
+                                        <span ng-if="uiTranslatesCtrl.syncProgress === 0">0%</span>
                                     </div>
                                 </div>
 
                                 <div class="panel panel-info">
                                     <div class="panel-body">
                                         <div ng-if="uiTranslatesCtrl.currentSectionName" style="margin-bottom: 10px;">
-                                            <strong>Current Section:</strong> 
+                                            <strong>Current Section:</strong>
                                             <span class="label label-primary">{{uiTranslatesCtrl.currentSectionName}}</span>
                                         </div>
-                                        
+
                                         <div ng-if="uiTranslatesCtrl.sectionProgress" style="margin-bottom: 10px;">
                                             <strong>Progress:</strong> {{uiTranslatesCtrl.sectionProgress}}
                                         </div>
-                                        
+
                                         <div>
                                             <strong>Status:</strong> {{uiTranslatesCtrl.syncMessage}}
                                         </div>
@@ -345,7 +346,7 @@
     </div>
 
     <!-- ADD LANGUAGE MODAL -->
-    <div class="modal" tabindex="-1" role="dialog" ng-show="uiTranslatesCtrl.showAddLanguageModal" style="display: block;">
+    <div class="modal" tabindex="-1" role="dialog" ng-if="uiTranslatesCtrl.showAddLanguageModal">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -361,16 +362,16 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID: {{uiTranslatesCtrl.chosen.projectID}})</p>
-                                <p><strong>Current Languages:</strong> 
+                                <p><strong>Current Languages:</strong>
                                     <span class="label label-info" style="margin-right: 5px;" ng-repeat="locale in uiTranslatesCtrl.chosen.locales">
                                         {{locale | uppercase}}
                                     </span>
                                 </p>
                             </div>
                         </div>
-                        
+
                         <hr>
-                        
+
                         <div class="row">
                             <div class="col-md-12">
                                 <h5>Select Language to Add:</h5>
@@ -379,12 +380,12 @@
                                         <option value="">-- Select a language --</option>
                                     </select>
                                 </div>
-                                
+
                                 <div ng-if="uiTranslatesCtrl.availableLanguages.length === 0" class="alert alert-info">
                                     <i class="glyphicon glyphicon-info-sign"></i>
                                     All common languages have already been added to this project.
                                 </div>
-                                
+
                                 <div ng-if="uiTranslatesCtrl.selectedLanguage" class="alert alert-success">
                                     <strong>Selected:</strong> {{uiTranslatesCtrl.selectedLanguage.name}} ({{uiTranslatesCtrl.selectedLanguage.nativeName}}) - {{uiTranslatesCtrl.selectedLanguage.code}}
                                 </div>
@@ -397,7 +398,7 @@
                         <div class="row">
                             <div class="col-md-12 text-center">
                                 <h5>Adding Language: <strong>{{uiTranslatesCtrl.selectedLanguage.name}} ({{uiTranslatesCtrl.selectedLanguage.code}})</strong></h5>
-                                
+
                                 <div class="alert alert-info">
                                     <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i>
                                     Creating language document...
@@ -425,5 +426,5 @@
     </div>
 
     <!-- Modal backdrop -->
-    <div class="modal-backdrop fade in" ng-show="uiTranslatesCtrl.showSyncModal"></div>
+    <div class="modal-backdrop fade in" ng-if="uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.showAddLanguageModal"></div>
 </div>

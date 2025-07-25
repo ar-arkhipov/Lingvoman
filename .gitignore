@@ -7,3 +7,4 @@ package-lock.json
 .kiro
 tests
 .DS_Store
+logs
