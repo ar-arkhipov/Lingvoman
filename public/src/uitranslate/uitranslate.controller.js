@@ -38,9 +38,6 @@
                 function poll() {
                     UiTranslateFactory.getSyncProgress(jobId)
                         .then(function(jobData) {
-                            console.log("ZALYPA");
-                            // Debug: print every progress value received
-                            console.log('Polling jobId:', jobId, 'locale:', targetLocale, 'progress:', jobData.progress, 'status:', jobData.status);
                             if (updateCallback) {
                                 updateCallback(jobData);
                             }
@@ -98,9 +95,7 @@
 
 //receiving information about available translations (id, locale)
         vm.init = function () {
-            console.log('Initializing UiTranslatesCtrl...');
             UiTranslateFactory.getProjectsList().then(function (data) {
-                console.log(data);
                 vm.initList = data;
             });
         };
@@ -109,14 +104,9 @@
         vm.chooseProject = function (project) {
             vm.id = project.projectID;
             vm.chosen = project;
-            console.log('Project chosen:', project); // Debug log
-            console.log('Available locales:', project.locales); // Debug log
-            // Set first available locale as default
             if (Array.isArray(project.locales) && project.locales.length > 0) {
                 vm.locale = project.locales[0];
-                console.log('Set locale to', vm.locale); // Debug log
             }
-            // Always ensure modal is closed when selecting a project
             vm.showAddLanguageModal = false;
         };
 
@@ -124,15 +114,12 @@
         vm.getTrans = function () {
             if (vm.gettingForm.$valid) {
                 UiTranslateFactory.getTranslationItem(vm.id, vm.locale).then(function (data) {
-                    console.log(data);
                     vm.data = data;
-
                     for (let n = 0; n < vm.data.length; n++) {
                         if (!vm.data[n].translations) {
                             vm.data[n].translations = {};
                         }
                     }
-
                     if (vm.data.length) {
                         $rootScope.$broadcast('growl', {type: 'success', msg: 'Translations received!'});
                     } else {
@@ -191,9 +178,7 @@
 
             UiTranslateFactory.getUnsyncInfo(vm.chosen.projectID).then(function (unsyncData) {
                 vm.unsyncedInfo = unsyncData;
-                console.log('Unsync info:', vm.unsyncedInfo);
-            }).catch(function (error) {
-                console.error('Error loading unsync info:', error);
+            }).catch(function () {
                 $rootScope.$broadcast('growl', {
                     type: 'danger',
                     msg: 'Failed to load language information'
@@ -466,10 +451,7 @@
         vm.changeTranslation = function (item) {
             if (confirm('Are you sure you want to save?')) {
                 delete item._id;
-                console.log(item);
                 UiTranslateFactory.saveTranslation(item).then(function (data) {
-                    console.log(data);
-
                     if (data.ok) {
                         $rootScope.$broadcast('growl', {
                             type: 'success',
@@ -542,7 +524,6 @@
         vm.makeCopy = function (item) {
             var newLang = prompt('Please enter the name of locale: ');
             var newItem = (JSON.parse(JSON.stringify(item)));
-
             if (newLang) {
                 UiTranslateFactory.getTranslationItem(newItem.projectID, newLang).then(function (data) {
                     if (!data.length) {
@@ -564,7 +545,6 @@
             if (confirm('You are going to TOTALLY DELETE document ' + item.locale + ' of project ' + item.projectID + '-' + item.projectAlphaId)) {
                 UiTranslateFactory.deleteTranslation(item.projectID, item.locale)
                     .then(function (data) {
-                        console.log('Delete response:', data);
                         var deleted = false;
                         if (data && typeof data === 'object') {
                             if (data.ok) {
@@ -574,7 +554,6 @@
                             }
                         }
                         if (deleted) {
-                            // Remove item by matching projectID and locale
                             var index = vm.data.findIndex(function (doc) {
                                 return doc.projectID == item.projectID && doc.locale == item.locale;
                             });
@@ -595,16 +574,8 @@
                             });
                         }
                     })
-                    .catch(function (error) {
-                        console.error('Delete error:', error);
+                    .catch(function () {
                         var errorMsg = 'Unexpected error';
-                        if (error && error.data && error.data.message) {
-                            if (error.data.error === 'NOT_FOUND') {
-                                errorMsg = 'Document not found. It may have already been deleted.';
-                            } else {
-                                errorMsg = error.data.message;
-                            }
-                        }
                         $rootScope.$broadcast('growl', {type: 'danger', msg: errorMsg});
                     });
             }
@@ -613,7 +584,6 @@
 // get aggregated list of available documents in backup collection
         vm.checkCopies = function () {
             UiTranslateFactory.getBackupsList().then(function (data) {
-                console.log(data);
                 vm.copiesList = data;
                 vm.data = [];
             });
@@ -623,8 +593,6 @@
         vm.restore = function (id, locale) {
             if (confirm('Are you sure you want to recover/replace the document with backup-copy?')) {
                 UiTranslateFactory.restoreFromBackup(id, locale).then(function (data) {
-                    console.log(data);
-
                     if (data.ok) {
                         $rootScope.$broadcast('growl', {type: 'success', msg: 'Document recovered succesfuly!'});
                         vm.copiesList = [];
@@ -669,33 +637,17 @@
          * Load list of common languages
          */
         vm.loadCommonLanguages = function () {
-            console.log('Loading common languages...');
-            console.log('Current project locales:', vm.chosen.locales);
-
             var availableLanguages = UiTranslateFactory.getAvailableLanguages();
-
-            console.log('Common languages loaded:', availableLanguages);
-            console.log('Languages before filtering:', availableLanguages);
-
             vm.availableLanguages = availableLanguages.filter(function (lang) {
-                var isAvailable = vm.chosen.locales.indexOf(lang.code) === -1;
-                console.log('Language ' + lang.code + ' available: ' + isAvailable);
-                return isAvailable;
+                return vm.chosen.locales.indexOf(lang.code) === -1;
             });
-
-            console.log('Available languages after filtering:', vm.availableLanguages);
         };
 
         /**
          * Add selected language to project
          */
         vm.addLanguageToProject = function () {
-            console.log('addLanguageToProject called');
-            console.log('selectedLanguage:', vm.selectedLanguage);
-            console.log('availableLanguages:', vm.availableLanguages);
-
             if (!vm.selectedLanguage) {
-                console.log('No language selected!');
                 $rootScope.$broadcast('growl', {
                     type: 'warning',
                     msg: 'Please select a language first'
