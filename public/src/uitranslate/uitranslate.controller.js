@@ -5,59 +5,23 @@
         .module('app')
         .controller('UiTranslatesCtrl', UiTranslatesCtrl);
 
-    UiTranslatesCtrl.$inject = ['UiTranslateFactory', '$rootScope', '$window', '$timeout'];
+    UiTranslatesCtrl.$inject = [
+        'UiTranslateFactory', '$rootScope', '$window', '$timeout',
+        'SyncProgressService', 'FlexibleSyncService', 'ModalService', 'ProjectService',
+        'TranslationService', 'BackupService', 'LanguageUtils'
+    ];
 
-    function UiTranslatesCtrl(UiTranslateFactory, $rootScope, $window, $timeout) {
+    function UiTranslatesCtrl(
+        UiTranslateFactory, $rootScope, $window, $timeout,
+        SyncProgressService, FlexibleSyncService, ModalService, ProjectService,
+        TranslationService, BackupService, LanguageUtils
+    ) {
         // --- SYNC HELPERS ---
 
         /**
          * Start sync for a single language, returns Promise with jobId
          */
-        function startLanguageSync(projectID, projectAlphaId, sourceLocale, targetLocale) {
-            var syncData = {
-                projectID: projectID,
-                projectAlphaId: projectAlphaId,
-                sourceLocale: sourceLocale,
-                targetLocale: targetLocale
-            };
-            return UiTranslateFactory.startFlexibleSync(syncData)
-                .then(function(response) {
-                    if (response && response.jobId) {
-                        return response.jobId;
-                    } else {
-                        return Promise.reject('No jobId returned from backend');
-                    }
-                });
-        }
-
-        /**
-         * Poll progress for a jobId, updates UI, resolves when finished
-         */
-        function pollSyncProgress(jobId, targetLocale, updateCallback) {
-            return new Promise(function(resolve, reject) {
-                function poll() {
-                    UiTranslateFactory.getSyncProgress(jobId)
-                        .then(function(jobData) {
-                            if (updateCallback) {
-                                updateCallback(jobData);
-                            }
-                            // Always trigger digest after update
-                            $timeout(function(){},0);
-                            if (jobData.status === 'completed') {
-                                resolve(jobData);
-                            } else if (jobData.status === 'failed') {
-                                reject(jobData.error || 'Sync failed');
-                            } else {
-                                $timeout(poll, 2000);
-                            }
-                        })
-                        .catch(function(err) {
-                            reject('Failed to poll progress: ' + err);
-                        });
-                }
-                poll();
-            });
-        }
+        // Synchronization logic for translations has been refactored and moved to FlexibleSyncService and SyncProgressService.
         var vm = this;
 
         vm.id = '';
@@ -90,12 +54,12 @@
          * Get language name by code
          */
         vm.getLanguageName = function (code) {
-            return UiTranslateFactory.getLanguageName(code);
+            return LanguageUtils.getLanguageName(code);
         };
 
 //receiving information about available translations (id, locale)
         vm.init = function () {
-            UiTranslateFactory.getProjectsList().then(function (data) {
+            ProjectService.getProjectsList().then(function (data) {
                 vm.initList = data;
             });
         };
@@ -107,13 +71,13 @@
             if (Array.isArray(project.locales) && project.locales.length > 0) {
                 vm.locale = project.locales[0];
             }
-            vm.showAddLanguageModal = false;
+            ModalService.hideAddLanguageModal();
         };
 
 //get a definite translations json from main collection
         vm.getTrans = function () {
             if (vm.gettingForm.$valid) {
-                UiTranslateFactory.getTranslationItem(vm.id, vm.locale).then(function (data) {
+                TranslationService.getTrans(vm.id, vm.locale).then(function (data) {
                     vm.data = data;
                     for (let n = 0; n < vm.data.length; n++) {
                         if (!vm.data[n].translations) {
@@ -193,143 +157,30 @@
             if ($event) {
                 $event.stopPropagation();
             }
-
-            vm.syncingLanguages[targetLocale] = true;
-            vm.currentTargetLocale = targetLocale;
-            vm.languageProgress[targetLocale] = {progress: 0, step: '', message: ''};
-            if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
-                vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = 0;
-            }
-
-            // Start sync, get jobId, then poll progress
-            startLanguageSync(vm.chosen.projectID, vm.chosen.projectAlphaId, vm.unsyncedInfo.sourceLocale, targetLocale)
-                .then(function(jobId) {
-                    return pollSyncProgress(jobId, targetLocale, function(jobData) {
-                        // Update UI for each poll
-                        vm.languageProgress[targetLocale].progress = jobData.progress || 0;
-                        vm.languageProgress[targetLocale].step = jobData.step || '';
-                        vm.languageProgress[targetLocale].message = jobData.message || '';
-                        if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
-                            vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = jobData.progress || 0;
-                        }
-                        if (!$rootScope.$$phase) {
-                            $rootScope.$apply();
-                        }
-                    });
-                })
-                .then(function(finalJobData) {
-                    // Success
-                    vm.syncingLanguages[targetLocale] = false;
-                    vm.languageProgress[targetLocale].progress = 100;
-                    vm.languageProgress[targetLocale].step = 'Completed';
-                    vm.languageProgress[targetLocale].message = 'Translation sync completed successfully!';
-                    if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
+            FlexibleSyncService.syncOneLanguage(vm, targetLocale, function(jobData) {
+                // Update UI for each poll
+                vm.languageProgress[targetLocale].progress = jobData.progress || 0;
+                vm.languageProgress[targetLocale].step = jobData.step || '';
+                vm.languageProgress[targetLocale].message = jobData.message || '';
+                if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
+                    vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = jobData.progress || 0;
+                    // If completed, update state
+                    if (jobData.progress === 100 || jobData.status === 'completed') {
+                        vm.unsyncedInfo.targetLanguages[targetLocale].needsSync = false;
                         vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = 100;
                     }
-                    $rootScope.$broadcast('growl', {
-                        type: 'success',
-                        msg: 'Translation to ' + vm.getLanguageName(targetLocale) + ' completed successfully!'
-                    });
-                    vm.loadUnsyncInfo();
-                })
-                .catch(function(error) {
-                    // Failure
-                    vm.syncingLanguages[targetLocale] = false;
-                    vm.languageProgress[targetLocale].step = 'Failed';
-                    vm.languageProgress[targetLocale].message = error || 'Translation sync failed';
-                    if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
-                        vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = 0;
-                    }
-                    $rootScope.$broadcast('growl', {
-                        type: 'danger',
-                        msg: 'Translation sync failed: ' + (error || 'Unknown error')
-                    });
-                });
+                }
+                if (!$rootScope.$$phase) {
+                    $rootScope.$apply();
+                }
+            });
         };
 
         /**
          * Sync all languages that need syncing
          */
         vm.syncAllLanguages = function () {
-            if (!vm.unsyncedInfo || vm.unsyncedInfo.unsyncedLanguages.length === 0) {
-                return;
-            }
-
-            vm.flexibleSyncInProgress = true;
-            var languagesToSync = vm.unsyncedInfo.unsyncedLanguages.slice();
-            var i = 0;
-
-            function syncOneLanguage(targetLocale) {
-                vm.currentTargetLocale = targetLocale;
-                vm.syncingLanguages[targetLocale] = true;
-                vm.languageProgress[targetLocale] = {progress: 0, step: '', message: ''};
-                if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
-                    vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = 0;
-                }
-                return startLanguageSync(vm.chosen.projectID, vm.chosen.projectAlphaId, vm.unsyncedInfo.sourceLocale, targetLocale)
-                    .then(function(jobId) {
-                        return pollSyncProgress(jobId, targetLocale, function(jobData) {
-                            // Update per-language progress
-                            vm.languageProgress[targetLocale].progress = jobData.progress || 0;
-                            vm.languageProgress[targetLocale].step = jobData.step || '';
-                            vm.languageProgress[targetLocale].message = jobData.message || '';
-                            if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
-                                vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = jobData.progress || 0;
-                            }
-                            // Update modal progress bar for current language
-                            vm.syncProgress = jobData.progress || 0;
-                            vm.syncStep = jobData.step || '';
-                            vm.syncMessage = jobData.message || '';
-                            if (!$rootScope.$$phase) {
-                                $rootScope.$apply();
-                            }
-                        });
-                    })
-                    .then(function(finalJobData) {
-                        vm.syncingLanguages[targetLocale] = false;
-                        vm.languageProgress[targetLocale].progress = 100;
-                        vm.languageProgress[targetLocale].step = 'Completed';
-                        vm.languageProgress[targetLocale].message = 'Translation sync completed successfully!';
-                        if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
-                            vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = 100;
-                        }
-                        $rootScope.$broadcast('growl', {
-                            type: 'success',
-                            msg: 'Translation to ' + vm.getLanguageName(targetLocale) + ' completed successfully!'
-                        });
-                    })
-                    .catch(function(error) {
-                        vm.syncingLanguages[targetLocale] = false;
-                        vm.languageProgress[targetLocale].step = 'Failed';
-                        vm.languageProgress[targetLocale].message = error || 'Translation sync failed';
-                        if (vm.unsyncedInfo && vm.unsyncedInfo.targetLanguages && vm.unsyncedInfo.targetLanguages[targetLocale]) {
-                            vm.unsyncedInfo.targetLanguages[targetLocale].syncProgress = 0;
-                        }
-                        $rootScope.$broadcast('growl', {
-                            type: 'danger',
-                            msg: 'Translation sync failed: ' + (error || 'Unknown error')
-                        });
-                    });
-            }
-
-            function syncLanguagesSequentially() {
-                if (i >= languagesToSync.length) {
-                    vm.flexibleSyncInProgress = false;
-                    $rootScope.$broadcast('growl', {
-                        type: 'success',
-                        msg: 'All languages synced successfully!'
-                    });
-                    vm.loadUnsyncInfo();
-                    return;
-                }
-                var targetLocale = languagesToSync[i];
-                syncOneLanguage(targetLocale).then(function() {
-                    i++;
-                    syncLanguagesSequentially();
-                });
-            }
-            syncLanguagesSequentially();
-
+            FlexibleSyncService.syncAllLanguages(vm);
         };
 
         /**
@@ -450,8 +301,7 @@
 //save changes
         vm.changeTranslation = function (item) {
             if (confirm('Are you sure you want to save?')) {
-                delete item._id;
-                UiTranslateFactory.saveTranslation(item).then(function (data) {
+                TranslationService.changeTranslation(item).then(function (data) {
                     if (data.ok) {
                         $rootScope.$broadcast('growl', {
                             type: 'success',
@@ -467,13 +317,8 @@
         vm.makeNew = function () {
             if (vm.gettingForm.$valid) {
                 var alphaId = prompt('Alphabetical name of the project', 'project');
-
                 if (vm.id && vm.locale && alphaId) {
-                    UiTranslateFactory.createTranslation({
-                        'projectID': vm.id,
-                        'locale': vm.locale,
-                        'projectAlphaId': alphaId
-                    }).then(function (data) {
+                    TranslationService.makeNew(vm.id, vm.locale, alphaId).then(function (data) {
                         if (data.status == 400) {
                             $rootScope.$broadcast('growl', {
                                 type: 'danger',
@@ -523,11 +368,9 @@
 // creating a local copy of document with new locale, should be saved after being filled in
         vm.makeCopy = function (item) {
             var newLang = prompt('Please enter the name of locale: ');
-            var newItem = (JSON.parse(JSON.stringify(item)));
             if (newLang) {
-                UiTranslateFactory.getTranslationItem(newItem.projectID, newLang).then(function (data) {
-                    if (!data.length) {
-                        newItem.locale = newLang;
+                TranslationService.makeCopy(item, newLang).then(function (newItem) {
+                    if (newItem) {
                         vm.data.push(newItem);
                         $rootScope.$broadcast('growl', {
                             type: 'warning',
@@ -543,7 +386,7 @@
 // removing document from the main collection
         vm.removeDoc = function (item) {
             if (confirm('You are going to TOTALLY DELETE document ' + item.locale + ' of project ' + item.projectID + '-' + item.projectAlphaId)) {
-                UiTranslateFactory.deleteTranslation(item.projectID, item.locale)
+                TranslationService.removeDoc(item.projectID, item.locale)
                     .then(function (data) {
                         var deleted = false;
                         if (data && typeof data === 'object') {
@@ -583,7 +426,7 @@
 
 // get aggregated list of available documents in backup collection
         vm.checkCopies = function () {
-            UiTranslateFactory.getBackupsList().then(function (data) {
+            BackupService.checkCopies().then(function (data) {
                 vm.copiesList = data;
                 vm.data = [];
             });
@@ -592,7 +435,7 @@
 // restore definite document from backup collection to main
         vm.restore = function (id, locale) {
             if (confirm('Are you sure you want to recover/replace the document with backup-copy?')) {
-                UiTranslateFactory.restoreFromBackup(id, locale).then(function (data) {
+                BackupService.restore(id, locale).then(function (data) {
                     if (data.ok) {
                         $rootScope.$broadcast('growl', {type: 'success', msg: 'Document recovered succesfuly!'});
                         vm.copiesList = [];
@@ -611,9 +454,10 @@
         /**
          * Open the add language modal
          */
+
         vm.openAddLanguageModal = function () {
-            if (vm.chosen && !vm.showAddLanguageModal) {
-                vm.showAddLanguageModal = true;
+            if (vm.chosen && !ModalService.isAddLanguageModalVisible()) {
+                ModalService.showAddLanguageModal();
                 vm.selectedLanguage = null;
                 vm.loadCommonLanguages();
             } else if (!vm.chosen) {
@@ -624,11 +468,16 @@
             }
         };
 
+        // Getter for modal visibility
+        vm.isAddLanguageModalVisible = function () {
+            return ModalService.isAddLanguageModalVisible();
+        };
+
         /**
          * Close the add language modal
          */
         vm.closeAddLanguageModal = function () {
-            vm.showAddLanguageModal = false;
+            ModalService.hideAddLanguageModal();
             vm.selectedLanguage = null;
             vm.addingLanguage = false;
         };
@@ -637,10 +486,8 @@
          * Load list of common languages
          */
         vm.loadCommonLanguages = function () {
-            var availableLanguages = UiTranslateFactory.getAvailableLanguages();
-            vm.availableLanguages = availableLanguages.filter(function (lang) {
-                return vm.chosen.locales.indexOf(lang.code) === -1;
-            });
+            var availableLanguages = LanguageUtils.getAvailableLanguages();
+            vm.availableLanguages = ProjectService.loadCommonLanguages(vm.chosen, availableLanguages);
         };
 
         /**

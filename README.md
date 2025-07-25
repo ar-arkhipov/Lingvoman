@@ -7,6 +7,12 @@ JWT (JSON Web Token) technology is used as authorization method.
 User receives token after succesfull login and then this token should be placed in "x-access-token" header of every query. Only administrator can create users and set their rights.
 Method for login will be described in "API" section.
 
+## Migration Note
+All legacy routing and business logic have been fully migrated to a new layered architecture (controllers, services, DTOs, middleware). Legacy files (`routes/index.js`, `routes/api.js`) have been removed. All endpoints are now handled by the new structure in `src/routes/index.js` and corresponding controllers/services.
+
+## Cleanup
+If you encounter any references to legacy files, please remove them. All documentation and code should now reference the new structure only.
+
 Dynamic Translation Sync
 ------------------------
 New feature: Automatic translation sync to any language using OpenAI API.

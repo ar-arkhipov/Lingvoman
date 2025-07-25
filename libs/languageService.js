@@ -70,6 +70,41 @@ class LanguageService {
                 const projectInfo = await this.getProjectLanguages(projectID);
 
                 sourceLocale = projectInfo.sourceLanguage;
+                // If only one language exists, suggest all supported locales except the source
+
+                if (projectInfo.availableLanguages.length === 1) {
+
+                    const supportedLocales = ['en', 'ja'];
+
+                    const targetLanguages = {};
+
+                    supportedLocales.forEach((locale) => {
+                        if (locale !== sourceLocale) {
+                            targetLanguages[locale] = {
+                                locale,
+                                totalSections: 0,
+                                translatedSections: 0,
+                                missingSections: [],
+                                missingKeys: {},
+                                totalMissingKeys: 0,
+                                syncProgress: 0,
+                                lastModified: null,
+                                needsSync: true
+                            };
+                        }
+                    });
+
+                    return {
+                        projectID: parseInt(projectID),
+                        sourceLocale,
+                        sourceInfo: {
+                            totalSections: 0,
+                            totalKeys: 0
+                        },
+                        targetLanguages,
+                        unsyncedLanguages: Object.keys(targetLanguages)
+                    };
+                }
             }
 
             if (!sourceLocale) {

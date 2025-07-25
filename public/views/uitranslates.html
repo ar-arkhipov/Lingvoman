@@ -193,19 +193,19 @@
                                 <h5>Available Languages</h5>
 
                                 <!-- Languages with missing translations -->
-                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages" ng-if="langInfo.needsSync" class="panel panel-warning">
+                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages" ng-if="langInfo.needsSync || langInfo.syncProgress < 100" class="panel" ng-class="{'panel-warning': langInfo.needsSync, 'panel-success': !langInfo.needsSync && langInfo.syncProgress === 100}">
                                     <div class="panel-heading" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;" ng-click="langInfo.expanded = !langInfo.expanded">
                                         <div style="display: flex; align-items: center; flex-grow: 1;">
                                             <i class="glyphicon" ng-class="{'glyphicon-chevron-down': langInfo.expanded, 'glyphicon-chevron-right': !langInfo.expanded}" style="margin-right: 8px;"></i>
                                             <strong>{{locale | uppercase}}</strong>
                                             <span class="badge" style="margin-left: 10px;">{{langInfo.totalMissingKeys}} missing keys</span>
                                             <div class="progress" style="width: 200px; margin-left: 15px; margin-bottom: 0;">
-                                                <div class="progress-bar progress-bar-warning text-center" ng-style="{width: langInfo.syncProgress + '%'}">
+                                                <div class="progress-bar" ng-class="{'progress-bar-warning': langInfo.needsSync && langInfo.syncProgress < 100, 'progress-bar-success': !langInfo.needsSync && langInfo.syncProgress === 100}" ng-style="{width: langInfo.syncProgress + '%'}">
                                                     {{langInfo.syncProgress}}%
                                                 </div>
                                             </div>
                                         </div>
-                                        <button type="button" class="btn btn-sm btn-primary" ng-click="uiTranslatesCtrl.syncLanguage(locale, $event)" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress" style="margin-left: 15px;">
+                                        <button type="button" class="btn btn-sm btn-primary" ng-click="uiTranslatesCtrl.syncLanguage(locale, $event)" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !langInfo.needsSync || langInfo.syncProgress === 100" style="margin-left: 15px;">
                                             <i class="glyphicon glyphicon-refresh" ng-class="{'glyphicon-refresh-animate': uiTranslatesCtrl.syncingLanguages[locale]}" style="margin-right: 5px;"></i><span ng-if="!uiTranslatesCtrl.syncingLanguages[locale]">Sync</span><span ng-if="uiTranslatesCtrl.syncingLanguages[locale]">Syncing...</span>
                                         </button>
                                     </div>
@@ -346,7 +346,7 @@
     </div>
 
     <!-- ADD LANGUAGE MODAL -->
-    <div class="modal" tabindex="-1" role="dialog" ng-if="uiTranslatesCtrl.showAddLanguageModal">
+    <div class="modal" tabindex="-1" role="dialog" ng-if="uiTranslatesCtrl.isAddLanguageModalVisible()">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -426,5 +426,5 @@
     </div>
 
     <!-- Modal backdrop -->
-    <div class="modal-backdrop fade in" ng-if="uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.showAddLanguageModal"></div>
+    <div class="modal-backdrop fade in" ng-if="uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()"></div>
 </div>
