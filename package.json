@@ -48,7 +48,7 @@
     "prestart": "npm run check",
     "prestart:dev": "npm run check",
     "prestart:prod": "npm run check",
-    "zaibalo": "npm run build:watch | npm run start:dev"
+    "local:setup": "npm run build:watch | npm run start:dev"
   },
   "repository": {
     "type": "git",
