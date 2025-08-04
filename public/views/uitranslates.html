@@ -12,45 +12,53 @@
                     <div class="input-group">
                         <div class="input-group-btn">
                             <!--dropdown button -->
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
                                 Project <span class="caret"></span>
                             </button>
                             <!-- dropdawn btn LIST -->
                             <ul class="dropdown-menu">
-                                <li ng-repeat="project in uiTranslatesCtrl.initList" >
+                                <li ng-repeat="project in uiTranslatesCtrl.initList">
                                     <a href="#" ng-click="uiTranslatesCtrl.chooseProject(project)">
                                         {{project.projectAlphaId}} - {{project.projectID}}
                                     </a>
                                 </li>
                             </ul>
                         </div>
-                        <input type="text" class="form-control" placeholder="Project ID" ng-model="uiTranslatesCtrl.id" ng-required="true">
+                        <input type="text" class="form-control" placeholder="Project ID" ng-model="uiTranslatesCtrl.id"
+                               ng-required="true">
                     </div>
                     <!--locale input group -->
                     <div class="input-group">
                         <div class="input-group-btn">
                             <!--dropdown button -->
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
                                 Language <span class="caret"></span>
                             </button>
                             <!-- dropdown btn LIST -->
                             <ul class="dropdown-menu">
-                                <li ng-repeat="locale in uiTranslatesCtrl.chosen.locales" ng-click="uiTranslatesCtrl.locale = locale">
+                                <li ng-repeat="locale in uiTranslatesCtrl.chosen.locales"
+                                    ng-click="uiTranslatesCtrl.locale = locale">
                                     <a href="#">
                                         {{locale}}
                                     </a>
                                 </li>
                             </ul>
                         </div>
-                        <input type="text" class="form-control" placeholder="Locale" ng-model="uiTranslatesCtrl.locale" ng-required="true">
+                        <input type="text" class="form-control" placeholder="Locale" ng-model="uiTranslatesCtrl.locale"
+                               ng-required="true">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
-                <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document</button>
-                <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()" ng-show="uiTranslatesCtrl.chosen">
+                <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document
+                </button>
+                <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()"
+                        ng-show="uiTranslatesCtrl.chosen">
                     <i class="glyphicon glyphicon-plus" style="margin-right: 5px;"></i>Add Language
                 </button>
-                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()" ng-show="uiTranslatesCtrl.chosen">
+                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()"
+                        ng-show="uiTranslatesCtrl.chosen">
                     <i class="glyphicon glyphicon-globe" style="margin-right: 5px;"></i>Sync to Other Languages
                 </button>
             </form>
@@ -72,19 +80,22 @@
             <div class="panel-body">
                 Recover -
                 <button type="button" class="btn btn-info" style="margin: 0 4px;" ng-repeat="locale in copy.locales"
-                        ng-click="uiTranslatesCtrl.restore(copy.projectID, locale)">{{locale}}</button>
+                        ng-click="uiTranslatesCtrl.restore(copy.projectID, locale)">{{locale}}
+                </button>
             </div>
         </div>
     </div>
 
     <!-- sync results -->
-    <div class="alert alert-success" ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'success'">
+    <div class="alert alert-success"
+         ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'success'">
         <button type="button" class="close" ng-click="uiTranslatesCtrl.syncResult = null">&times;</button>
         <h4>Sync Successful!</h4>
         <p>{{uiTranslatesCtrl.syncResult.message}}</p>
         <div ng-if="uiTranslatesCtrl.syncResult.data.translatedSections.length">
             <strong>Translated sections:</strong>
-            <span class="label label-success" ng-repeat="section in uiTranslatesCtrl.syncResult.data.translatedSections">{{section}}</span>
+            <span class="label label-success"
+                  ng-repeat="section in uiTranslatesCtrl.syncResult.data.translatedSections">{{section}}</span>
         </div>
         <div ng-if="uiTranslatesCtrl.syncResult.data.skippedSections.length">
             <strong>Already translated:</strong>
@@ -92,7 +103,8 @@
         </div>
     </div>
 
-    <div class="alert alert-danger" ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'error'">
+    <div class="alert alert-danger"
+         ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'error'">
         <button type="button" class="close" ng-click="uiTranslatesCtrl.syncResult = null">&times;</button>
         <h4>Sync Failed!</h4>
         <p>{{uiTranslatesCtrl.syncResult.message}}</p>
@@ -107,34 +119,42 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title">
-                            ID: {{item.projectID}} - {{item.projectAlphaId}} <span class="label label-info" >{{item.locale}}</span>
-                            <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.removeDoc(item)">DELETE</button>
+                            ID: {{item.projectID}} - {{item.projectAlphaId}} <span class="label label-info">{{item.locale}}</span>
+                            <button type="button" class="btn btn-danger btn-xs pull-right"
+                                    ng-click="uiTranslatesCtrl.removeDoc(item)">DELETE
+                            </button>
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <button type="button" class="btn btn-success btn-xs" ng-click="uiTranslatesCtrl.changeTranslation(item)">Save</button>
+                        <button type="button" class="btn btn-success btn-xs"
+                                ng-click="uiTranslatesCtrl.changeTranslation(item)">Save
+                        </button>
                         <button type="button" class="btn btn-warning btn-xs" ng-click="uiTranslatesCtrl.makeCopy(item)"
-                                ng-if="uiTranslatesCtrl.data.length < 2">Take as template</button>
+                                ng-if="uiTranslatesCtrl.data.length < 2">Take as template
+                        </button>
                     </div>
                 </div>
 
                 <div ng-repeat="(key, value) in item.translations" class="container-fluid well">
 
                     <h4>Group:
-                        <span class="label label-default" >{{key}}</span>
-                        <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.deleteGroup(item.translations, key)"
-                                ng-if="uiTranslatesCtrl.data.length < 2">Delete group</button>
+                        <span class="label label-default">{{key}}</span>
+                        <button type="button" class="btn btn-danger btn-xs pull-right"
+                                ng-click="uiTranslatesCtrl.deleteGroup(item.translations, key)"
+                                ng-if="uiTranslatesCtrl.data.length < 2">Delete group
+                        </button>
                     </h4>
 
                     <div class="input-group" ng-repeat="(def, trans) in value" style="margin:10px 0;">
                         <span class="input-group-addon" id="basic-addon1">{{def}}</span>
                         <input type="text" class="form-control" placeholder="" aria-describedby="basic-addon1"
                                value="{{trans}}" ng-model="item.translations[key][def]">
-                <span class="input-group-btn">
+                        <span class="input-group-btn">
                     <button class="btn btn-default" type="button" ng-click="" ng-if="trans.length > 45">
                         <span class="glyphicon glyphicon-modal-window"></span>
                     </button>
-                    <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.deleteField(item.translations, key, def)"
+                    <button class="btn btn-default" type="button"
+                            ng-click="uiTranslatesCtrl.deleteField(item.translations, key, def)"
                             title="Remove field" ng-if="uiTranslatesCtrl.data.length < 2" tabindex="-1">
                         <span class="glyphicon glyphicon-remove"></span>
                     </button>
@@ -142,18 +162,22 @@
                     </div>
 
                     <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
-                        <input type="text" class="form-control" placeholder="Add new field to the group" aria-describedby="basic-addon1" ng-model="newField">
-                <span class="input-group-btn">
-                  <button class="btn btn-default" type="submit" ng-click="uiTranslatesCtrl.addField(item.translations, key, newField); newField=null;"
+                        <input type="text" class="form-control" placeholder="Add new field to the group"
+                               aria-describedby="basic-addon1" ng-model="newField">
+                        <span class="input-group-btn">
+                  <button class="btn btn-default" type="submit"
+                          ng-click="uiTranslatesCtrl.addField(item.translations, key, newField); newField=null;"
                           title="Add field"><span class="glyphicon glyphicon-plus"></span></button>
                 </span>
                     </div>
                 </div>
 
                 <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
-                    <input type="text" class="form-control" placeholder="Create group" aria-describedby="basic-addon1" ng-model="newGroup">
-                <span class="input-group-btn">
-                  <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.addGroup(item.translations, newGroup)"
+                    <input type="text" class="form-control" placeholder="Create group" aria-describedby="basic-addon1"
+                           ng-model="newGroup">
+                    <span class="input-group-btn">
+                  <button class="btn btn-default" type="button"
+                          ng-click="uiTranslatesCtrl.addGroup(item.translations, newGroup)"
                           title="Create group"><span class="glyphicon glyphicon-plus"></span></button>
                 </span>
                 </div>
@@ -183,7 +207,8 @@
                     <div ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">
                         <div class="row">
                             <div class="col-md-12">
-                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID: {{uiTranslatesCtrl.chosen.projectID}})</p>
+                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID:
+                                    {{uiTranslatesCtrl.chosen.projectID}})</p>
                             </div>
                         </div>
 
@@ -193,20 +218,36 @@
                                 <h5>Available Languages</h5>
 
                                 <!-- Languages with missing translations -->
-                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages" ng-if="langInfo.needsSync || langInfo.syncProgress < 100" class="panel" ng-class="{'panel-warning': langInfo.needsSync, 'panel-success': !langInfo.needsSync && langInfo.syncProgress === 100}">
-                                    <div class="panel-heading" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;" ng-click="langInfo.expanded = !langInfo.expanded">
+                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages"
+                                     ng-if="langInfo.needsSync || langInfo.syncProgress < 100" class="panel"
+                                     ng-class="{'panel-warning': langInfo.needsSync, 'panel-success': !langInfo.needsSync && langInfo.syncProgress === 100}">
+                                    <div class="panel-heading"
+                                         style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;"
+                                         ng-click="langInfo.expanded = !langInfo.expanded">
                                         <div style="display: flex; align-items: center; flex-grow: 1;">
-                                            <i class="glyphicon" ng-class="{'glyphicon-chevron-down': langInfo.expanded, 'glyphicon-chevron-right': !langInfo.expanded}" style="margin-right: 8px;"></i>
+                                            <i class="glyphicon"
+                                               ng-class="{'glyphicon-chevron-down': langInfo.expanded, 'glyphicon-chevron-right': !langInfo.expanded}"
+                                               style="margin-right: 8px;"></i>
                                             <strong>{{locale | uppercase}}</strong>
                                             <span class="badge" style="margin-left: 10px;">{{langInfo.totalMissingKeys}} missing keys</span>
-                                            <div class="progress" style="width: 200px; margin-left: 15px; margin-bottom: 0;">
-                                                <div class="progress-bar" ng-class="{'progress-bar-warning': langInfo.needsSync && langInfo.syncProgress < 100, 'progress-bar-success': !langInfo.needsSync && langInfo.syncProgress === 100}" ng-style="{width: langInfo.syncProgress + '%'}">
+                                            <div class="progress"
+                                                 style="width: 200px; margin-left: 15px; margin-bottom: 0;">
+                                                <div class="progress-bar"
+                                                     ng-class="{'progress-bar-warning': langInfo.needsSync && langInfo.syncProgress < 100, 'progress-bar-success': !langInfo.needsSync && langInfo.syncProgress === 100}"
+                                                     ng-style="{width: langInfo.syncProgress + '%'}">
                                                     {{langInfo.syncProgress}}%
                                                 </div>
                                             </div>
                                         </div>
-                                        <button type="button" class="btn btn-sm btn-primary" ng-click="uiTranslatesCtrl.syncLanguage(locale, $event)" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !langInfo.needsSync || langInfo.syncProgress === 100" style="margin-left: 15px;">
-                                            <i class="glyphicon glyphicon-refresh" ng-class="{'glyphicon-refresh-animate': uiTranslatesCtrl.syncingLanguages[locale]}" style="margin-right: 5px;"></i><span ng-if="!uiTranslatesCtrl.syncingLanguages[locale]">Sync</span><span ng-if="uiTranslatesCtrl.syncingLanguages[locale]">Syncing...</span>
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                                ng-click="uiTranslatesCtrl.syncLanguage(locale, $event)"
+                                                ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !langInfo.needsSync || uiTranslatesCtrl.syncingLanguages[locale]"
+                                                style="margin-left: 15px;">
+                                            <i class="glyphicon glyphicon-refresh"
+                                               ng-class="{'glyphicon-refresh-animate': uiTranslatesCtrl.syncingLanguages[locale]}"
+                                               style="margin-right: 5px;"></i><span
+                                                ng-if="!uiTranslatesCtrl.syncingLanguages[locale]">Sync</span><span
+                                                ng-if="uiTranslatesCtrl.syncingLanguages[locale]">Syncing...</span>
                                         </button>
                                     </div>
 
@@ -216,12 +257,14 @@
                                         <div class="alert alert-info" style="font-size: 11px; margin-bottom: 10px;">
                                             <strong>Debug:</strong>
                                             Missing sections: {{langInfo.missingSections.length || 0}} |
-                                            Missing keys object: {{Object.keys(langInfo.missingKeys || {}).length}} sections |
+                                            Missing keys object: {{Object.keys(langInfo.missingKeys || {}).length}}
+                                            sections |
                                             Total missing: {{langInfo.totalMissingKeys}}
                                         </div>
 
                                         <div ng-if="langInfo.missingSections && langInfo.missingSections.length > 0">
-                                            <h6><strong>Missing Sections ({{langInfo.missingSections.length}}):</strong></h6>
+                                            <h6><strong>Missing Sections ({{langInfo.missingSections.length}}):</strong>
+                                            </h6>
                                             <div class="row">
                                                 <div class="col-md-6" ng-repeat="section in langInfo.missingSections">
                                                     <div class="well well-sm">
@@ -234,7 +277,8 @@
 
                                         <div ng-if="langInfo.missingKeys && Object.keys(langInfo.missingKeys).length > (langInfo.missingSections ? langInfo.missingSections.length : 0)">
                                             <h6><strong>Sections with Missing Keys:</strong></h6>
-                                            <div ng-repeat="(sectionKey, missingKeys) in langInfo.missingKeys" ng-if="!langInfo.missingSections || langInfo.missingSections.indexOf(sectionKey) === -1">
+                                            <div ng-repeat="(sectionKey, missingKeys) in langInfo.missingKeys"
+                                                 ng-if="!langInfo.missingSections || langInfo.missingSections.indexOf(sectionKey) === -1">
                                                 <div class="well well-sm">
                                                     <strong>{{sectionKey}}</strong>
                                                     <span class="badge">{{missingKeys.length}} missing keys</span>
@@ -247,21 +291,26 @@
 
                                         <div ng-if="(!langInfo.missingSections || langInfo.missingSections.length === 0) && (!langInfo.missingKeys || Object.keys(langInfo.missingKeys).length === 0)">
                                             <div class="alert alert-warning">
-                                                No missing sections or keys data found, but totalMissingKeys is {{langInfo.totalMissingKeys}}.
+                                                No missing sections or keys data found, but totalMissingKeys is
+                                                {{langInfo.totalMissingKeys}}.
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Languages that are up to date -->
-                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages" ng-if="!langInfo.needsSync" class="panel panel-success">
+                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages"
+                                     ng-if="!langInfo.needsSync" class="panel panel-success">
                                     <div class="panel-heading" style="display: flex; align-items: center;">
                                         <div style="display: flex; align-items: center; flex-grow: 1;">
                                             <i class="glyphicon glyphicon-ok" style="margin-right: 8px;"></i>
                                             <strong>{{locale | uppercase}}</strong>
-                                            <span class="badge badge-success" style="margin-left: 10px;">Up to date</span>
-                                            <div class="progress" style="width: 200px; margin-left: 15px; margin-bottom: 0;">
-                                                <div class="progress-bar progress-bar-success text-center" style="width: 100%;">
+                                            <span class="badge badge-success"
+                                                  style="margin-left: 10px;">Up to date</span>
+                                            <div class="progress"
+                                                 style="width: 200px; margin-left: 15px; margin-bottom: 0;">
+                                                <div class="progress-bar progress-bar-success text-center"
+                                                     style="width: 100%;">
                                                     100%
                                                 </div>
                                             </div>
@@ -270,16 +319,19 @@
                                 </div>
 
                                 <!-- Show message if no other languages -->
-                                <div ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0 && uiTranslatesCtrl.unsyncedInfo.targetLanguages && Object.keys(uiTranslatesCtrl.unsyncedInfo.targetLanguages).length === 0" class="alert alert-info">
+                                <div ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0 && uiTranslatesCtrl.unsyncedInfo.targetLanguages && Object.keys(uiTranslatesCtrl.unsyncedInfo.targetLanguages).length === 0"
+                                     class="alert alert-info">
                                     <i class="glyphicon glyphicon-info-sign"></i>
-                                    This project only has the source language ({{uiTranslatesCtrl.unsyncedInfo.sourceLocale | uppercase}}).
+                                    This project only has the source language
+                                    ({{uiTranslatesCtrl.unsyncedInfo.sourceLocale | uppercase}}).
                                     Create translations in other languages first.
                                 </div>
                             </div>
                         </div>
 
                         <div ng-if="!uiTranslatesCtrl.unsyncedInfo" class="text-center">
-                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Loading project languages...
+                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Loading project
+                            languages...
                         </div>
                     </div>
 
@@ -288,7 +340,8 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <h4 style="margin-bottom: 20px;">
-                                    <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate" style="margin-right: 8px;"></i>
+                                    <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"
+                                       style="margin-right: 8px;"></i>
                                     Translating to <strong>{{uiTranslatesCtrl.getLanguageName(uiTranslatesCtrl.currentTargetLocale)}}</strong>
                                 </h4>
 
@@ -319,7 +372,8 @@
                                     </div>
                                 </div>
 
-                                <div ng-if="uiTranslatesCtrl.currentJobId" class="small text-muted" style="text-align: center;">
+                                <div ng-if="uiTranslatesCtrl.currentJobId" class="small text-muted"
+                                     style="text-align: center;">
                                     Job ID: {{uiTranslatesCtrl.currentJobId}}
                                 </div>
                             </div>
@@ -328,11 +382,14 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeSyncModal()" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress">
+                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeSyncModal()"
+                            ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress">
                         <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">Close</span>
                         <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">Hide</span>
                     </button>
-                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.syncAllLanguages()" ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !uiTranslatesCtrl.unsyncedInfo || uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0" ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length > 0">
+                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.syncAllLanguages()"
+                            ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !uiTranslatesCtrl.unsyncedInfo || uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0"
+                            ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length > 0">
                         <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">
                             <i class="glyphicon glyphicon-refresh"></i> Sync All Languages
                         </span>
@@ -350,7 +407,8 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <button type="button" class="close" ng-click="uiTranslatesCtrl.closeAddLanguageModal()" aria-label="Close">
+                    <button type="button" class="close" ng-click="uiTranslatesCtrl.closeAddLanguageModal()"
+                            aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                     <h4 class="modal-title">
@@ -361,9 +419,11 @@
                     <div ng-if="!uiTranslatesCtrl.addingLanguage">
                         <div class="row">
                             <div class="col-md-12">
-                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID: {{uiTranslatesCtrl.chosen.projectID}})</p>
+                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID:
+                                    {{uiTranslatesCtrl.chosen.projectID}})</p>
                                 <p><strong>Current Languages:</strong>
-                                    <span class="label label-info" style="margin-right: 5px;" ng-repeat="locale in uiTranslatesCtrl.chosen.locales">
+                                    <span class="label label-info" style="margin-right: 5px;"
+                                          ng-repeat="locale in uiTranslatesCtrl.chosen.locales">
                                         {{locale | uppercase}}
                                     </span>
                                 </p>
@@ -376,7 +436,8 @@
                             <div class="col-md-12">
                                 <h5>Select Language to Add:</h5>
                                 <div ng-if="uiTranslatesCtrl.availableLanguages.length > 0" class="form-group">
-                                    <select class="form-control" ng-model="uiTranslatesCtrl.selectedLanguage" ng-options="lang as (lang.name + ' (' + lang.nativeName + ') - ' + lang.code) for lang in uiTranslatesCtrl.availableLanguages track by lang.code">
+                                    <select class="form-control" ng-model="uiTranslatesCtrl.selectedLanguage"
+                                            ng-options="lang as (lang.name + ' (' + lang.nativeName + ') - ' + lang.code) for lang in uiTranslatesCtrl.availableLanguages track by lang.code">
                                         <option value="">-- Select a language --</option>
                                     </select>
                                 </div>
@@ -387,7 +448,9 @@
                                 </div>
 
                                 <div ng-if="uiTranslatesCtrl.selectedLanguage" class="alert alert-success">
-                                    <strong>Selected:</strong> {{uiTranslatesCtrl.selectedLanguage.name}} ({{uiTranslatesCtrl.selectedLanguage.nativeName}}) - {{uiTranslatesCtrl.selectedLanguage.code}}
+                                    <strong>Selected:</strong> {{uiTranslatesCtrl.selectedLanguage.name}}
+                                    ({{uiTranslatesCtrl.selectedLanguage.nativeName}}) -
+                                    {{uiTranslatesCtrl.selectedLanguage.code}}
                                 </div>
                             </div>
                         </div>
@@ -397,7 +460,8 @@
                     <div ng-if="uiTranslatesCtrl.addingLanguage">
                         <div class="row">
                             <div class="col-md-12 text-center">
-                                <h5>Adding Language: <strong>{{uiTranslatesCtrl.selectedLanguage.name}} ({{uiTranslatesCtrl.selectedLanguage.code}})</strong></h5>
+                                <h5>Adding Language: <strong>{{uiTranslatesCtrl.selectedLanguage.name}}
+                                    ({{uiTranslatesCtrl.selectedLanguage.code}})</strong></h5>
 
                                 <div class="alert alert-info">
                                     <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i>
@@ -409,10 +473,13 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeAddLanguageModal()" ng-disabled="uiTranslatesCtrl.addingLanguage">
+                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeAddLanguageModal()"
+                            ng-disabled="uiTranslatesCtrl.addingLanguage">
                         Cancel
                     </button>
-                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.addLanguageToProject()" ng-disabled="!uiTranslatesCtrl.selectedLanguage || uiTranslatesCtrl.addingLanguage" ng-if="uiTranslatesCtrl.availableLanguages.length > 0">
+                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.addLanguageToProject()"
+                            ng-disabled="!uiTranslatesCtrl.selectedLanguage || uiTranslatesCtrl.addingLanguage"
+                            ng-if="uiTranslatesCtrl.availableLanguages.length > 0">
                         <span ng-if="!uiTranslatesCtrl.addingLanguage">
                             <i class="glyphicon glyphicon-plus"></i> Add Language
                         </span>
@@ -426,5 +493,6 @@
     </div>
 
     <!-- Modal backdrop -->
-    <div class="modal-backdrop fade in" ng-if="uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()"></div>
+    <div class="modal-backdrop fade in"
+         ng-if="uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()"></div>
 </div>

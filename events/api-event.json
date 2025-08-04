@@ -1,0 +1,19 @@
+{
+  "httpMethod": "GET",
+  "path": "/health",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "queryStringParameters": null,
+  "pathParameters": null,
+  "body": null,
+  "isBase64Encoded": false,
+  "requestContext": {
+    "httpMethod": "GET",
+    "path": "/health",
+    "requestId": "test-request-id",
+    "requestTime": "2023-01-01T00:00:00.000Z",
+    "requestTimeEpoch": 1672531200000,
+    "stage": "dev"
+  }
+} 

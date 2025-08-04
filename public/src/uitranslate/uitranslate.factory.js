@@ -5,19 +5,19 @@
         .module('app')
         .factory('UiTranslateFactory', UiTranslateFactory);
 
-    UiTranslateFactory.$inject = ['$resource'];
+    UiTranslateFactory.$inject = ['$resource', 'APP_CONFIG'];
 
-    function UiTranslateFactory($resource) {
+    function UiTranslateFactory($resource, APP_CONFIG) {
         
         // API Resources
-        var initial = $resource('/api/uitranslate/list', {}, {
+        var initial = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/list', {}, {
             query: {
                 method: 'GET',
                 isArray: true
             }
         });
 
-        var trans = $resource('/api/uitranslate/item', {}, {
+        var trans = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/item', {}, {
             query: {
                 method: 'GET',
                 isArray: false
@@ -33,7 +33,7 @@
             }
         });
 
-        var restore = $resource('/api/uitranslate/backup', {}, {
+        var restore = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/backup', {}, {
             query: {
                 method: 'GET',
                 isArray: true
@@ -43,31 +43,31 @@
             }
         });
 
-        var flexibleSync = $resource('/api/uitranslate/sync-flexible', {}, {
+        var flexibleSync = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/sync-flexible', {}, {
             save: {
                 method: 'POST'
             }
         });
 
-        var syncProgress = $resource('/api/uitranslate/sync-progress/:jobId', {jobId: '@jobId'}, {
+        var syncProgress = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/sync-progress/:jobId', {jobId: '@jobId'}, {
             get: {
                 method: 'GET'
             }
         });
 
-        var projectLanguages = $resource('/api/uitranslate/languages/:projectID', {projectID: '@projectID'}, {
+        var projectLanguages = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/languages/:projectID', {projectID: '@projectID'}, {
             query: {
                 method: 'GET'
             }
         });
 
-        var unsyncInfo = $resource('/api/uitranslate/unsync-info/:projectID', {projectID: '@projectID'}, {
+        var unsyncInfo = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/unsync-info/:projectID', {projectID: '@projectID'}, {
             query: {
                 method: 'GET'
             }
         });
 
-        var addLanguage = $resource('/api/uitranslate/add-language', {}, {
+        var addLanguage = $resource(APP_CONFIG.getBaseUrl() + '/api/uitranslate/add-language', {}, {
             save: {
                 method: 'POST'
             }

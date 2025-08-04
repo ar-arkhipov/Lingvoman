@@ -54,8 +54,10 @@ app.use(express.urlencoded({
 // Method override for REST API
 app.use(methodOverride());
 
-// Static files
-app.use(express.static(path.join(__dirname, '../public')));
+// Static files - only serve in development
+if (config.isDevelopment()) {
+    app.use(express.static(path.join(__dirname, '../public')));
+}
 
 // General rate limiting (applied to all routes)
 app.use(generalRateLimit);

@@ -216,12 +216,6 @@ class LanguageService {
             missingKeys,
             totalMissingKeys
         };
-
-        return {
-            missingSections,
-            missingKeys,
-            totalMissingKeys
-        };
     }
 
     /**

@@ -1,7 +1,78 @@
 Lingvoman
 =========
 
-Authorization
+A translation management system for storing, serving, and automatically translating UI content using OpenAI.
+
+## 🚀 Quick Deployment
+
+### AWS Lambda (Serverless) Deployment
+
+1. **Prerequisites:**
+   - Node.js 22+ installed
+   - AWS CLI configured
+   - MongoDB Atlas database
+   - OpenAI API key
+
+2. **Setup:**
+   ```bash
+   # Install dependencies
+   npm install
+   
+   # Configure environment variables
+   cp env.example .env
+   # Edit .env with your values
+   
+   # Setup CodePipeline for automatic deployment
+   ./setup-pipeline.sh
+   
+   # Authorize GitHub connection in AWS Console
+   # Push to main branch = automatic deployment
+   ```
+
+3. **Manual Deployment (optional):**
+   ```bash
+   # Deploy backend + frontend
+   ./deploy-sam.sh
+   
+   # Or deploy separately:
+   npm run deploy          # Backend (Lambda)
+   ./deploy-frontend.sh    # Frontend (S3)
+   ```
+
+### Traditional Heroku Deployment
+
+1. **Setup:**
+   ```bash
+   # Install dependencies
+   npm install
+   
+   # Configure environment variables
+   cp env.example .env
+   # Edit .env with your values
+   ```
+
+2. **Deploy:**
+   ```bash
+   # Deploy to Heroku
+   heroku create your-app-name
+   git push heroku main
+   ```
+
+## Documentation
+
+- [SAM Deployment Guide](SAM-DEPLOYMENT.md) - Complete AWS SAM deployment guide
+- [CodePipeline Setup](CODEPIPELINE-SETUP.md) - Automatic deployment with CodePipeline
+- [Migration Summary](MIGRATION-SUMMARY.md) - Overview of the migration process
+
+## Architecture
+
+- **Backend**: Express.js API with JWT authentication
+- **Frontend**: AngularJS SPA
+- **Database**: MongoDB
+- **Translation**: OpenAI API integration
+- **Deployment**: AWS Lambda + S3 (serverless) or Heroku
+
+## Authorization
 -------------
 JWT (JSON Web Token) technology is used as authorization method.
 User receives token after succesfull login and then this token should be placed in "x-access-token" header of every query. Only administrator can create users and set their rights.

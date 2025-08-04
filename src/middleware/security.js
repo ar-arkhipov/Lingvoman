@@ -38,7 +38,13 @@ const corsOptions = {
         
         const allowedOrigins = process.env.ALLOWED_ORIGINS 
             ? process.env.ALLOWED_ORIGINS.split(',')
-            : ['http://localhost:3000', 'http://localhost:1337'];
+            : [
+                'http://localhost:3000', 
+                'http://localhost:1337',
+                // TODO: REPLACE with working buckets
+                'https://lingvoman-frontend.s3-website-us-east-1.amazonaws.com',
+                'https://lingvoman-frontend.s3.amazonaws.com'
+              ];
         
         if (allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
             callback(null, true);

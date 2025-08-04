@@ -1,0 +1,86 @@
+version: 0.2
+
+env:
+  variables:
+    NODE_ENV: production
+    SAM_CLI_TELEMETRY: 0
+  parameter-store:
+    MONGO_URI: /lingvoman/${CODEBUILD_WEBHOOK_HEAD_REF##*/}/mongo-uri
+    JWT_SECRET: /lingvoman/${CODEBUILD_WEBHOOK_HEAD_REF##*/}/jwt-secret
+    OPENAI_API_KEY: /lingvoman/${CODEBUILD_WEBHOOK_HEAD_REF##*/}/openai-api-key
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 22
+    commands:
+      - npm install -g aws-sam-cli
+      - npm install
+
+  pre_build:
+    commands:
+      - |
+        if [ "${CODEBUILD_WEBHOOK_HEAD_REF##*/}" = "master" ]; then
+          export ENVIRONMENT=prod
+        else
+          export ENVIRONMENT=dev
+        fi
+      - echo "Deploying to $ENVIRONMENT environment"
+      - cd public && npm install && npx gulp js && cd ..
+
+  build:
+    commands:
+      - sam build
+      - |
+        sam deploy \
+          --no-confirm-changeset \
+          --no-fail-on-empty-changeset \
+          --stack-name lingvoman-${ENVIRONMENT} \
+          --capabilities CAPABILITY_IAM \
+          --parameter-overrides \
+            Stage=${ENVIRONMENT} \
+            MongoUri="${MONGO_URI}" \
+            JwtSecret="${JWT_SECRET}" \
+            OpenAiApiKey="${OPENAI_API_KEY}"
+      - |
+        API_URL=$(aws cloudformation describe-stacks \
+          --stack-name lingvoman-${ENVIRONMENT} \
+          --query 'Stacks[0].Outputs[?OutputKey==`ApiGatewayUrl`].OutputValue' \
+          --output text)
+        BUCKET_NAME=$(aws cloudformation describe-stacks \
+          --stack-name lingvoman-${ENVIRONMENT} \
+          --query 'Stacks[0].Outputs[?OutputKey==`FrontendBucketName`].OutputValue' \
+          --output text)
+      - |
+        cat > public/src/config.js << EOF
+        'use strict';
+        (function() {
+            angular.module('app').constant('APP_CONFIG', {
+                getBaseUrl: function() { return '${API_URL}'.replace(/\/$/, ''); },
+                getTimeout: function() { return 900000; }
+            });
+        })();
+        EOF
+      - cd public && npx gulp js && cd ..
+      - |
+        aws s3 sync public/ s3://${BUCKET_NAME} \
+          --delete \
+          --exclude "src/*" \
+          --exclude "node_modules/*" \
+          --exclude "gulpfile.js" \
+          --exclude "package*.json"
+
+  post_build:
+    commands:
+      - echo "Deployment completed to $ENVIRONMENT environment"
+      - echo "API URL: $API_URL"
+      - echo "Frontend URL: http://${BUCKET_NAME}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com"
+
+artifacts:
+  files:
+    - .aws-sam/**/*
+
+cache:
+  paths:
+    - node_modules/**/*
+    - public/node_modules/**/* 

@@ -8,3 +8,6 @@ package-lock.json
 tests
 .DS_Store
 logs
+.aws-sam
+/.aws-sam/
+/.serverless/

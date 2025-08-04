@@ -7,6 +7,7 @@
     "node": ">=22.0.0"
   },
   "dependencies": {
+    "@vendia/serverless-express": "^4.12.6",
     "cors": "^2.8.5",
     "dotenv": "17.2.0",
     "express": "4.21.2",
@@ -35,6 +36,8 @@
     "build:watch": "cd public && npx gulp watch",
     "build:clean": "cd public && rm -f js/app.js",
     "dev": "npm run build && npm run start:dev",
+    "dev:server": "node scripts/dev-server.js",
+    "dev:watch": "npm run build:watch & npm run dev:server",
     "prod": "npm run build && npm run start:prod",
     "check": "node --check lingvoman.js",
     "check:syntax": "node --check lingvoman.js && node --check libs/config.js && node --check libs/mongoose.js",
@@ -48,7 +51,24 @@
     "prestart": "npm run check",
     "prestart:dev": "npm run check",
     "prestart:prod": "npm run check",
-    "local:setup": "npm run build:watch | npm run start:dev"
+    "deploy:dev": "sam build && sam deploy --config-env default",
+    "deploy:staging": "sam build && sam deploy --config-env staging",  
+    "deploy:prod": "sam build && sam deploy --config-env prod",
+    "deploy": "npm run deploy:dev",
+    "deploy:guided": "sam build && sam deploy --guided",
+    "package": "sam build && sam package",
+    "remove": "sam delete",
+    "remove:dev": "sam delete --config-env default",
+    "remove:staging": "sam delete --config-env staging",
+    "remove:prod": "sam delete --config-env prod",
+    "logs": "sam logs -n LingvomanApi --tail",
+    "logs:dev": "sam logs --stack-name lingvoman-dev -n LingvomanApi --tail",
+    "logs:staging": "sam logs --stack-name lingvoman-staging -n LingvomanApi --tail",
+    "logs:prod": "sam logs --stack-name lingvoman-prod -n LingvomanApi --tail",
+    "sam:local": "sam local start-api --warm-containers EAGER",
+    "sam:invoke": "sam local invoke LingvomanApi --event events/api-event.json",
+    "test:local": "node test-local.js",
+    "validate": "sam validate --template template-improved.yaml"
   },
   "repository": {
     "type": "git",
