@@ -71,7 +71,48 @@ class UiTranslationController {
     });
 
     /**
-     * Update translation document
+     * Update translation document with safe merge (RECOMMENDED)
+     * POST /api/uitranslate/merge
+     */
+    updateTranslationsWithMerge = asyncHandler(async (req, res) => {
+        const { projectID, locale, translations, options = {} } = req.body;
+
+        const updateResult = await uiTranslationService.updateTranslationsWithMerge(
+            projectID, 
+            locale, 
+            translations, 
+            options
+        );
+
+        return ResponseBuilder.success(
+            res,
+            updateResult,
+            'Translations merged successfully'
+        );
+    });
+
+    /**
+     * Update translation sections atomically
+     * POST /api/uitranslate/sections
+     */
+    updateTranslationSections = asyncHandler(async (req, res) => {
+        const { projectID, locale, sectionUpdates } = req.body;
+
+        const updateResult = await uiTranslationService.updateTranslationSections(
+            projectID, 
+            locale, 
+            sectionUpdates
+        );
+
+        return ResponseBuilder.success(
+            res,
+            updateResult,
+            'Translation sections updated successfully'
+        );
+    });
+
+    /**
+     * Update translation document (LEGACY - direct replacement)
      * POST /api/uitranslate/item
      */
     updateTranslations = asyncHandler(async (req, res) => {
@@ -82,7 +123,7 @@ class UiTranslationController {
         return ResponseBuilder.success(
             res,
             updateResult,
-            'Translations updated successfully'
+            'Translations updated successfully (legacy mode - consider using merge endpoint)'
         );
     });
 

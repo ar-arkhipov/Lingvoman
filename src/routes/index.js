@@ -126,8 +126,32 @@ router.get('/api/uitranslate/item',
 );
 
 /**
+ * @route POST /api/uitranslate/merge
+ * @desc Update translation document with safe merge (RECOMMENDED)
+ * @access Private
+ */
+router.post('/api/uitranslate/merge',
+    authenticate,
+    generalRateLimit,
+    validateBody(UiTranslationDTOs.updateTranslation),
+    uiTranslationController.updateTranslationsWithMerge
+);
+
+/**
+ * @route POST /api/uitranslate/sections
+ * @desc Update translation sections atomically
+ * @access Private
+ */
+router.post('/api/uitranslate/sections',
+    authenticate,
+    generalRateLimit,
+    validateBody(UiTranslationDTOs.updateTranslation),
+    uiTranslationController.updateTranslationSections
+);
+
+/**
  * @route POST /api/uitranslate/item
- * @desc Update translation document
+ * @desc Update translation document (LEGACY - direct replacement)
  * @access Private
  */
 router.post('/api/uitranslate/item',

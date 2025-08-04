@@ -126,7 +126,50 @@ class UiTranslationService {
     }
 
     /**
-     * Update translation document
+     * Update translation document with safe merge strategy (RECOMMENDED)
+     * @param {number} projectID - Project ID
+     * @param {string} locale - Locale code
+     * @param {Object} translations - Updated translations to merge
+     * @param {Object} options - Update options
+     * @returns {Promise<Object>} Update result with merge info
+     */
+    async updateTranslationsWithMerge(projectID, locale, translations, options = {}) {
+        // Backup current version before updating
+        try {
+            const existingDoc = await uiTranslationRepository.findByProjectAndLocale(projectID, locale);
+            if (existingDoc) {
+                await uiTranslationRepository.backup(projectID, locale);
+                logger.info('Translation document backed up before merge update', { projectID, locale });
+            }
+        } catch (backupError) {
+            logger.warn('Failed to backup translation document before merge update', {
+                projectID,
+                locale,
+                error: backupError.message
+            });
+        }
+
+        // Perform safe merge update
+        const result = await uiTranslationRepository.mergeTranslations(projectID, locale, translations, options);
+
+        logger.info('Translation document updated with merge successfully', {
+            projectID,
+            locale,
+            mergeInfo: result.mergeInfo,
+            modifiedCount: result.modifiedCount
+        });
+
+        return {
+            projectID,
+            locale,
+            translationKeys: result.mergeInfo.finalKeyCount,
+            updateResult: result,
+            mergeInfo: result.mergeInfo
+        };
+    }
+
+    /**
+     * Update translation document (LEGACY - use updateTranslationsWithMerge for safety)
      * @param {number} projectID - Project ID
      * @param {string} locale - Locale code
      * @param {Object} translations - Updated translations
@@ -169,6 +212,47 @@ class UiTranslationService {
             projectID,
             locale,
             translationKeys: translationKeysCount,
+            updateResult: result
+        };
+    }
+
+    /**
+     * Update specific translation sections atomically
+     * @param {number} projectID - Project ID
+     * @param {string} locale - Locale code
+     * @param {Object} sectionUpdates - Object with section keys and their updates
+     * @returns {Promise<Object>} Update result
+     */
+    async updateTranslationSections(projectID, locale, sectionUpdates) {
+        // Backup current version before updating
+        try {
+            const existingDoc = await uiTranslationRepository.findByProjectAndLocale(projectID, locale);
+            if (existingDoc) {
+                await uiTranslationRepository.backup(projectID, locale);
+                logger.info('Translation document backed up before section update', { projectID, locale });
+            }
+        } catch (backupError) {
+            logger.warn('Failed to backup translation document before section update', {
+                projectID,
+                locale,
+                error: backupError.message
+            });
+        }
+
+        // Update sections atomically
+        const result = await uiTranslationRepository.updateSections(projectID, locale, sectionUpdates);
+
+        logger.info('Translation sections updated successfully', {
+            projectID,
+            locale,
+            updatedSections: Object.keys(sectionUpdates).length,
+            modifiedCount: result.modifiedCount
+        });
+
+        return {
+            projectID,
+            locale,
+            updatedSections: Object.keys(sectionUpdates).length,
             updateResult: result
         };
     }

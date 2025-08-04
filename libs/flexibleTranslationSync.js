@@ -330,32 +330,111 @@ class FlexibleTranslationSyncService {
     }
 
     /**
-     * Update a translation document in the database
+     * Update a translation document in the database with safe merge
+     * @param {number} projectID - Project ID
+     * @param {string} locale - Locale code
+     * @param {Object} translations - Updated translations object
+     * @param {boolean} useMerge - Whether to use safe merge (default: true for safety)
+     * @returns {Promise<Object>} Update result
+     */
+    async updateDocument(projectID, locale, translations, useMerge = true) {
+        try {
+            if (useMerge) {
+                // Use safe merge to prevent data loss
+                return await this.updateDocumentWithMerge(projectID, locale, translations);
+            } else {
+                // Legacy direct replacement (dangerous)
+                const query = {
+                    projectID: parseInt(projectID),
+                    locale
+                };
+
+                const result = await UiTran.updateOne(
+                    query,
+                    { $set: { translations } },
+                    { upsert: true }
+                );
+
+                console.log(`Updated ${locale} document for project ${projectID} (direct replacement)`);
+                return result;
+            }
+        } catch (error) {
+            console.error('Error updating document:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update a translation document with safe merge strategy
      * @param {number} projectID - Project ID
      * @param {string} locale - Locale code
      * @param {Object} translations - Updated translations object
      * @returns {Promise<Object>} Update result
      */
-    async updateDocument(projectID, locale, translations) {
+    async updateDocumentWithMerge(projectID, locale, translations) {
         try {
             const query = {
                 projectID: parseInt(projectID),
                 locale
             };
 
+            // Get existing document
+            const existingDoc = await UiTran.findOne(query);
+            
+            let mergedTranslations;
+            if (!existingDoc || !existingDoc.translations) {
+                // New document or no existing translations
+                mergedTranslations = translations;
+                console.log(`Creating new ${locale} document for project ${projectID}`);
+            } else {
+                // Merge with existing translations
+                mergedTranslations = this.mergeTranslations(existingDoc.translations, translations);
+                
+                const existingKeyCount = this.countTranslationKeys(existingDoc.translations);
+                const newKeyCount = this.countTranslationKeys(translations);
+                const mergedKeyCount = this.countTranslationKeys(mergedTranslations);
+                
+                console.log(`Merging ${locale} document for project ${projectID}: ${existingKeyCount} existing + ${newKeyCount} new = ${mergedKeyCount} total keys`);
+                
+                // Safety check: ensure we didn't lose data unexpectedly
+                if (mergedKeyCount < existingKeyCount) {
+                    console.warn(`Potential data loss detected: ${existingKeyCount} -> ${mergedKeyCount} keys for ${locale} project ${projectID}`);
+                }
+            }
+
             const result = await UiTran.updateOne(
                 query,
-                { $set: { translations } },
+                { $set: { translations: mergedTranslations } },
                 { upsert: true }
             );
 
-            console.log(`Updated ${locale} document for project ${projectID}`);
-
+            console.log(`Safely updated ${locale} document for project ${projectID} with merge`);
             return result;
         } catch (error) {
-            console.error('Error updating document:', error);
+            console.error('Error updating document with merge:', error);
             throw error;
         }
+    }
+
+    /**
+     * Count total translation keys in a translations object
+     * @param {Object} translations - Translations object
+     * @returns {number} Total key count
+     */
+    countTranslationKeys(translations) {
+        if (!translations || typeof translations !== 'object') {
+            return 0;
+        }
+
+        let totalKeys = 0;
+        Object.keys(translations).forEach((sectionKey) => {
+            const section = translations[sectionKey];
+            if (section && typeof section === 'object') {
+                totalKeys += Object.keys(section).length;
+            }
+        });
+
+        return totalKeys;
     }
 
     /**

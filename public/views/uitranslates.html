@@ -241,7 +241,7 @@
                                         </div>
                                         <button type="button" class="btn btn-sm btn-primary"
                                                 ng-click="uiTranslatesCtrl.syncLanguage(locale, $event)"
-                                                ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !langInfo.needsSync || uiTranslatesCtrl.syncingLanguages[locale]"
+                                                ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !langInfo.needsSync || langInfo.syncProgress === 100"
                                                 style="margin-left: 15px;">
                                             <i class="glyphicon glyphicon-refresh"
                                                ng-class="{'glyphicon-refresh-animate': uiTranslatesCtrl.syncingLanguages[locale]}"
