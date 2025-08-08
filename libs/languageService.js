@@ -220,6 +220,11 @@ class LanguageService {
                 });
 
                 if (sectionMissingKeys.length > 0) {
+                    // Always return the section when it contains missing keys
+                    if (missingSections.indexOf(sectionKey) === -1) {
+                        missingSections.push(sectionKey);
+                    }
+
                     missingKeys[sectionKey] = sectionMissingKeys;
                 }
             }
@@ -247,6 +252,11 @@ class LanguageService {
                 });
 
                 if (sectionExtraKeys.length > 0) {
+                    // Always return the section when it contains extra keys
+                    if (extraSections.indexOf(sectionKey) === -1) {
+                        extraSections.push(sectionKey);
+                    }
+
                     extraKeys[sectionKey] = sectionExtraKeys;
                 }
             }
@@ -274,11 +284,29 @@ class LanguageService {
      */
     calculateSyncProgress(sourceTranslations, targetTranslations) {
         const totalSourceKeys = this.countTotalKeys(sourceTranslations);
-        const totalTargetKeys = this.countTotalKeys(targetTranslations);
-        
+
         if (totalSourceKeys === 0) return 100;
 
-        return Math.min(100, Math.round((totalTargetKeys / totalSourceKeys) * 100));
+        // Count only keys that exist in both source and target.
+        // Extra keys in target should NOT improve progress, and missing keys reduce it.
+        let matchedKeys = 0;
+
+        Object.keys(sourceTranslations).forEach((sectionKey) => {
+            const sourceSection = sourceTranslations[sectionKey];
+            const targetSection = targetTranslations[sectionKey] || {};
+
+            if (sourceSection && typeof sourceSection === 'object') {
+                Object.keys(sourceSection).forEach((key) => {
+                    if (Object.prototype.hasOwnProperty.call(targetSection, key)) {
+                        matchedKeys++;
+                    }
+                });
+            }
+        });
+
+        const progress = Math.round((matchedKeys / totalSourceKeys) * 100);
+
+        return Math.max(0, Math.min(100, progress));
     }
 
     /**
