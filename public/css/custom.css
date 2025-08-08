@@ -1,11 +1,47 @@
 /* Ensure modals and backdrops are above other content */
 .modal {
   z-index: 1050;
-  display: block;
 }
+
 .modal-backdrop {
   z-index: 1040;
 }
+
+/* Proper Bootstrap modal scrolling */
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.modal-dialog {
+  margin: 30px auto;
+  max-height: calc(100vh - 60px);
+}
+
+.modal-content {
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  flex-shrink: 0;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.modal-footer {
+  flex-shrink: 0;
+}
+
 /* Custom styles for Lingvoman */
 
 /* Spinning animation for sync button */

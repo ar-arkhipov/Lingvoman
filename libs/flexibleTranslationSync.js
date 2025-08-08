@@ -21,11 +21,9 @@ class FlexibleTranslationSyncService {
      * @returns {Promise<string>} Job ID for progress tracking
      */
     async startTranslationSync(projectID, projectAlphaId, targetLocale, sourceLocale = null) {
-        // Auto-detect source language if not provided
+        // Default to English as master language if not provided
         if (!sourceLocale) {
-            const projectInfo = await languageService.getProjectLanguages(projectID);
-
-            sourceLocale = projectInfo.sourceLanguage;
+            sourceLocale = 'en'; // English is always the master language
         }
 
         // Validate inputs
@@ -108,37 +106,54 @@ class FlexibleTranslationSyncService {
                 });
             }
 
-            // Step 3: Compare documents and find missing sections
+            // Step 3: Analyze sync differences (missing and extra keys)
             progressTracker.updateProgress(jobId, {
                 progress: 30,
-                step: 'Analyzing missing translations',
-                message: 'Finding sections that need translation'
+                step: 'Analyzing sync differences',
+                message: 'Finding missing and extra translations compared to master language'
             });
 
-            const missingInfo = languageService.findMissingTranslations(
+            const syncDifferences = languageService.findSyncDifferences(
                 sourceDoc.translations, 
                 targetDoc.translations || {}
             );
 
-            if (missingInfo.totalMissingKeys === 0) {
+            // Step 4: Remove extra keys that don't exist in master language
+            if (syncDifferences.extra.totalExtraKeys > 0) {
+                progressTracker.updateProgress(jobId, {
+                    progress: 35,
+                    step: 'Cleaning extra keys',
+                    message: `Removing ${syncDifferences.extra.totalExtraKeys} extra keys not in master language`
+                });
+
+                targetDoc = await this.removeExtraKeys(projectID, targetLocale, targetDoc, syncDifferences.extra);
+                
+                console.log(`Removed ${syncDifferences.extra.totalExtraKeys} extra keys from ${targetLocale}`);
+            }
+
+            // Check if there are missing keys to translate
+            if (syncDifferences.missing.totalMissingKeys === 0) {
                 progressTracker.updateProgress(jobId, {
                     status: 'completed',
                     progress: 100,
                     step: 'Sync completed',
-                    message: 'All translations are up to date',
+                    message: syncDifferences.extra.totalExtraKeys > 0 
+                        ? `Sync completed - Removed ${syncDifferences.extra.totalExtraKeys} extra keys` 
+                        : 'All translations are up to date',
                     result: {
                         translatedSections: [],
                         skippedSections: Object.keys(sourceDoc.translations),
                         totalSections: Object.keys(sourceDoc.translations).length,
-                        totalKeys: languageService.countTotalKeys(sourceDoc.translations)
+                        totalKeys: languageService.countTotalKeys(sourceDoc.translations),
+                        removedExtraKeys: syncDifferences.extra.totalExtraKeys
                     }
                 });
 
                 return;
             }
 
-            // Step 4: Translate missing sections with immediate saving
-            const missingSections = this.buildMissingSections(sourceDoc.translations, missingInfo);
+            // Step 5: Translate missing sections with immediate saving
+            const missingSections = this.buildMissingSections(sourceDoc.translations, syncDifferences.missing);
             const sectionKeys = Object.keys(missingSections);
             const translatedSections = {};
             let processedSections = 0;
@@ -146,7 +161,7 @@ class FlexibleTranslationSyncService {
             progressTracker.updateProgress(jobId, {
                 progress: 40,
                 step: 'Starting translation',
-                message: `Translating ${missingInfo.totalMissingKeys} keys in ${sectionKeys.length} sections`
+                message: `Translating ${syncDifferences.missing.totalMissingKeys} keys in ${sectionKeys.length} sections`
             });
 
             // Translate and save each section immediately
@@ -212,7 +227,8 @@ class FlexibleTranslationSyncService {
                 message: `Successfully translated ${Object.keys(translatedSections).length} sections to ${targetLocale}`,
                 result: {
                     translatedSections: Object.keys(translatedSections),
-                    totalTranslatedKeys: missingInfo.totalMissingKeys,
+                    totalTranslatedKeys: syncDifferences.missing.totalMissingKeys,
+                    removedExtraKeys: syncDifferences.extra.totalExtraKeys,
                     skippedSections: Object.keys(sourceDoc.translations).filter(
                         (key) => !translatedSections[key]
                     ),
@@ -230,7 +246,7 @@ class FlexibleTranslationSyncService {
     /**
      * Build missing sections object from source translations and missing info
      * @param {Object} sourceTranslations - Source translations
-     * @param {Object} missingInfo - Missing translation info
+     * @param {Object} missingInfo - Missing translation info (from syncDifferences.missing)
      * @returns {Object} Missing sections to translate
      */
     buildMissingSections(sourceTranslations, missingInfo) {
@@ -306,6 +322,9 @@ class FlexibleTranslationSyncService {
 
     /**
      * Merge new translations into existing target translations
+     * Note: This method assumes that newTranslations only contains keys that should exist
+     * according to the master language. The sync process handles master language enforcement
+     * by calling removeExtraKeys() before translation and only translating missing keys.
      * @param {Object} existingTranslations - Current target translations
      * @param {Object} newTranslations - New translated sections
      * @returns {Object} Merged translations
@@ -356,6 +375,7 @@ class FlexibleTranslationSyncService {
                 );
 
                 console.log(`Updated ${locale} document for project ${projectID} (direct replacement)`);
+
                 return result;
             }
         } catch (error) {
@@ -382,6 +402,7 @@ class FlexibleTranslationSyncService {
             const existingDoc = await UiTran.findOne(query);
             
             let mergedTranslations;
+
             if (!existingDoc || !existingDoc.translations) {
                 // New document or no existing translations
                 mergedTranslations = translations;
@@ -394,11 +415,14 @@ class FlexibleTranslationSyncService {
                 const newKeyCount = this.countTranslationKeys(translations);
                 const mergedKeyCount = this.countTranslationKeys(mergedTranslations);
                 
-                console.log(`Merging ${locale} document for project ${projectID}: ${existingKeyCount} existing + ${newKeyCount} new = ${mergedKeyCount} total keys`);
+                console.log(`Merging ${locale} document for project ${projectID}: ` +
+                    `${existingKeyCount} existing + ${newKeyCount} new = ${mergedKeyCount} total keys`);
                 
                 // Safety check: ensure we didn't lose data unexpectedly
+
                 if (mergedKeyCount < existingKeyCount) {
-                    console.warn(`Potential data loss detected: ${existingKeyCount} -> ${mergedKeyCount} keys for ${locale} project ${projectID}`);
+                    console.warn('Potential data loss detected: ' +
+                        `${existingKeyCount} -> ${mergedKeyCount} keys for ${locale} project ${projectID}`);
                 }
             }
 
@@ -409,6 +433,7 @@ class FlexibleTranslationSyncService {
             );
 
             console.log(`Safely updated ${locale} document for project ${projectID} with merge`);
+
             return result;
         } catch (error) {
             console.error('Error updating document with merge:', error);
@@ -427,8 +452,10 @@ class FlexibleTranslationSyncService {
         }
 
         let totalKeys = 0;
+
         Object.keys(translations).forEach((sectionKey) => {
             const section = translations[sectionKey];
+
             if (section && typeof section === 'object') {
                 totalKeys += Object.keys(section).length;
             }
@@ -468,23 +495,76 @@ class FlexibleTranslationSyncService {
     }
 
     /**
+     * Remove extra keys from target language that don't exist in master language
+     * @param {number} projectID - Project ID
+     * @param {string} targetLocale - Target language locale
+     * @param {Object} targetDoc - Target document
+     * @param {Object} extraInfo - Extra keys information from findSyncDifferences
+     * @returns {Promise<Object>} Updated target document
+     */
+    async removeExtraKeys(projectID, targetLocale, targetDoc, extraInfo) {
+        if (extraInfo.totalExtraKeys === 0) {
+            console.log(`No extra keys to remove from ${targetLocale}`);
+
+            return targetDoc;
+        }
+
+        console.log(`Removing ${extraInfo.totalExtraKeys} extra keys from ${targetLocale} for project ${projectID}`);
+        
+        const cleanedTranslations = { ...targetDoc.translations };
+
+        // Remove extra sections entirely
+
+        extraInfo.extraSections.forEach((sectionKey) => {
+            const keyCount = cleanedTranslations[sectionKey] ? Object.keys(cleanedTranslations[sectionKey]).length : 0;
+
+            delete cleanedTranslations[sectionKey];
+            console.log(`  Removed entire section: ${sectionKey} (${keyCount} keys)`);
+        });
+
+        // Remove extra keys within sections
+        Object.keys(extraInfo.extraKeys).forEach((sectionKey) => {
+            if (cleanedTranslations[sectionKey]) {
+                extraInfo.extraKeys[sectionKey].forEach((key) => {
+                    delete cleanedTranslations[sectionKey][key];
+                    console.log(`  Removed key: ${sectionKey}.${key}`);
+                });
+                
+                // Remove section if it becomes empty after key removal
+                if (Object.keys(cleanedTranslations[sectionKey]).length === 0) {
+                    delete cleanedTranslations[sectionKey];
+                    console.log(`  Removed empty section: ${sectionKey}`);
+                }
+            }
+        });
+
+        // Update document immediately with cleaned translations
+        await this.updateDocument(projectID, targetLocale, cleanedTranslations, false);
+        
+        console.log(`Successfully cleaned ${targetLocale} document for project ${projectID}`);
+        
+        // Return updated document reference
+        return { ...targetDoc, translations: cleanedTranslations };
+    }
+
+    /**
      * Get sync status for a project and target locale
      * @param {number} projectID - Project ID
      * @param {string} targetLocale - Target locale code
-     * @param {string} sourceLocale - Source locale code (auto-detected if null)
+     * @param {string} sourceLocale - Source locale code (defaults to 'en' if null)
      * @returns {Promise<Object>} Sync status information
      */
     async getSyncStatus(projectID, targetLocale, sourceLocale = null) {
         try {
-            // Auto-detect source language if not provided
+            // Default to English as master language if not provided
             if (!sourceLocale) {
-                const projectInfo = await languageService.getProjectLanguages(projectID);
-
-                sourceLocale = projectInfo.sourceLanguage;
+                sourceLocale = 'en'; // English is always the master language
             }
 
-            const sourceDoc = await this.getDocument(projectID, sourceLocale);
-            const targetDoc = await this.getDocument(projectID, targetLocale);
+            const [sourceDoc, targetDoc] = await Promise.all([
+                this.getDocument(projectID, sourceLocale),
+                this.getDocument(projectID, targetLocale)
+            ]);
 
             if (!sourceDoc) {
                 return {
@@ -506,7 +586,7 @@ class FlexibleTranslationSyncService {
                 };
             }
 
-            const missingInfo = languageService.findMissingTranslations(
+            const syncDifferences = languageService.findSyncDifferences(
                 sourceDoc.translations,
                 targetDoc.translations
             );
@@ -514,14 +594,17 @@ class FlexibleTranslationSyncService {
             return {
                 hasSource: true,
                 hasTarget: true,
-                syncNeeded: missingInfo.totalMissingKeys > 0,
+                syncNeeded: syncDifferences.missing.totalMissingKeys > 0 || syncDifferences.extra.totalExtraKeys > 0,
                 sourceSections: Object.keys(sourceDoc.translations),
                 targetSections: Object.keys(targetDoc.translations),
-                missingSections: missingInfo.missingSections,
-                missingKeys: missingInfo.missingKeys,
-                totalMissingKeys: missingInfo.totalMissingKeys,
+                missingSections: syncDifferences.missing.missingSections,
+                missingKeys: syncDifferences.missing.missingKeys,
+                totalMissingKeys: syncDifferences.missing.totalMissingKeys,
+                extraSections: syncDifferences.extra.extraSections,
+                extraKeys: syncDifferences.extra.extraKeys,
+                totalExtraKeys: syncDifferences.extra.totalExtraKeys,
                 syncProgress: languageService.calculateSyncProgress(sourceDoc.translations, targetDoc.translations),
-                upToDate: missingInfo.totalMissingKeys === 0
+                upToDate: syncDifferences.missing.totalMissingKeys === 0 && syncDifferences.extra.totalExtraKeys === 0
             };
 
         } catch (error) {

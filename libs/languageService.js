@@ -36,19 +36,18 @@ class LanguageService {
                     totalKeys,
                     lastModified: doc.updatedAt || doc.createdAt
                 };
-
-                // The language with the most keys is considered the source language
-                if (!sourceLanguage || totalKeys > (sourceLanguage.totalKeys || 0)) {
-                    sourceLanguage = languages[locale];
-                }
             });
+
+            // English is always the master/source language
+            const masterLanguage = 'en';
+            const hasEnglish = languages[masterLanguage];
 
             return {
                 projectID: parseInt(projectID),
-                sourceLanguage: sourceLanguage?.locale || Object.keys(languages)[0] || null,
+                sourceLanguage: hasEnglish ? masterLanguage : Object.keys(languages)[0] || null,
                 availableLanguages: Object.keys(languages),
                 languageDetails: languages,
-                hasSource: !!sourceLanguage
+                hasSource: !!hasEnglish || Object.keys(languages).length > 0
             };
 
         } catch (error) {
@@ -65,46 +64,9 @@ class LanguageService {
      */
     async getUnsyncInfo(projectID, sourceLocale = null) {
         try {
-            // Auto-detect source language if not provided
+            // Default to English as master language if not provided
             if (!sourceLocale) {
-                const projectInfo = await this.getProjectLanguages(projectID);
-
-                sourceLocale = projectInfo.sourceLanguage;
-                // If only one language exists, suggest all supported locales except the source
-
-                if (projectInfo.availableLanguages.length === 1) {
-
-                    const supportedLocales = ['en', 'ja'];
-
-                    const targetLanguages = {};
-
-                    supportedLocales.forEach((locale) => {
-                        if (locale !== sourceLocale) {
-                            targetLanguages[locale] = {
-                                locale,
-                                totalSections: 0,
-                                translatedSections: 0,
-                                missingSections: [],
-                                missingKeys: {},
-                                totalMissingKeys: 0,
-                                syncProgress: 0,
-                                lastModified: null,
-                                needsSync: true
-                            };
-                        }
-                    });
-
-                    return {
-                        projectID: parseInt(projectID),
-                        sourceLocale,
-                        sourceInfo: {
-                            totalSections: 0,
-                            totalKeys: 0
-                        },
-                        targetLanguages,
-                        unsyncedLanguages: Object.keys(targetLanguages)
-                    };
-                }
+                sourceLocale = 'en'; // English is always the master language
             }
 
             if (!sourceLocale) {
@@ -140,18 +102,21 @@ class LanguageService {
 
                 const targetLocale = doc.locale;
                 const targetTranslations = doc.translations || {};
-                const missingInfo = this.findMissingTranslations(sourceTranslations, targetTranslations);
+                const syncDifferences = this.findSyncDifferences(sourceTranslations, targetTranslations);
 
                 targetLanguages[targetLocale] = {
                     locale: targetLocale,
                     totalSections: Object.keys(sourceTranslations).length,
                     translatedSections: Object.keys(targetTranslations).length,
-                    missingSections: missingInfo.missingSections,
-                    missingKeys: missingInfo.missingKeys,
-                    totalMissingKeys: missingInfo.totalMissingKeys,
+                    missingSections: syncDifferences.missing.missingSections,
+                    missingKeys: syncDifferences.missing.missingKeys,
+                    totalMissingKeys: syncDifferences.missing.totalMissingKeys,
+                    extraSections: syncDifferences.extra.extraSections,
+                    extraKeys: syncDifferences.extra.extraKeys,
+                    totalExtraKeys: syncDifferences.extra.totalExtraKeys,
                     syncProgress: this.calculateSyncProgress(sourceTranslations, targetTranslations),
                     lastModified: doc.updatedAt || doc.createdAt,
-                    needsSync: missingInfo.totalMissingKeys > 0
+                    needsSync: syncDifferences.missing.totalMissingKeys > 0 || syncDifferences.extra.totalExtraKeys > 0
                 };
             });
 
@@ -219,6 +184,89 @@ class LanguageService {
     }
 
     /**
+     * Find sync differences between master and target languages
+     * Detects both missing keys (to add) and extra keys (to remove)
+     * @param {Object} masterTranslations - Master language translations (English)
+     * @param {Object} targetTranslations - Target language translations
+     * @returns {Object} Sync differences info
+     */
+    findSyncDifferences(masterTranslations, targetTranslations) {
+        const missingSections = [];
+        const missingKeys = {};
+        const extraSections = [];
+        const extraKeys = {};
+        let totalMissingKeys = 0;
+        let totalExtraKeys = 0;
+
+        // Find missing keys (existing logic from findMissingTranslations)
+        Object.keys(masterTranslations).forEach((sectionKey) => {
+            const masterSection = masterTranslations[sectionKey];
+            const targetSection = targetTranslations[sectionKey];
+
+            if (!targetSection) {
+                // Entire section missing
+                missingSections.push(sectionKey);
+                totalMissingKeys += Object.keys(masterSection).length;
+                missingKeys[sectionKey] = Object.keys(masterSection);
+            } else {
+                // Check for missing keys within section
+                const sectionMissingKeys = [];
+
+                Object.keys(masterSection).forEach((key) => {
+                    if (!targetSection[key]) {
+                        sectionMissingKeys.push(key);
+                        totalMissingKeys++;
+                    }
+                });
+
+                if (sectionMissingKeys.length > 0) {
+                    missingKeys[sectionKey] = sectionMissingKeys;
+                }
+            }
+        });
+
+        // Find extra keys (NEW - keys that exist in target but not in master)
+        Object.keys(targetTranslations).forEach((sectionKey) => {
+            const targetSection = targetTranslations[sectionKey];
+            const masterSection = masterTranslations[sectionKey];
+
+            if (!masterSection) {
+                // Entire section is extra
+                extraSections.push(sectionKey);
+                totalExtraKeys += Object.keys(targetSection).length;
+                extraKeys[sectionKey] = Object.keys(targetSection);
+            } else {
+                // Check for extra keys within section
+                const sectionExtraKeys = [];
+
+                Object.keys(targetSection).forEach((key) => {
+                    if (!masterSection[key]) {
+                        sectionExtraKeys.push(key);
+                        totalExtraKeys++;
+                    }
+                });
+
+                if (sectionExtraKeys.length > 0) {
+                    extraKeys[sectionKey] = sectionExtraKeys;
+                }
+            }
+        });
+
+        return {
+            missing: {
+                missingSections,
+                missingKeys,
+                totalMissingKeys
+            },
+            extra: {
+                extraSections,
+                extraKeys,
+                totalExtraKeys
+            }
+        };
+    }
+
+    /**
      * Calculate sync progress percentage
      * @param {Object} sourceTranslations - Source translations
      * @param {Object} targetTranslations - Target translations
@@ -230,7 +278,7 @@ class LanguageService {
         
         if (totalSourceKeys === 0) return 100;
 
-        return Math.round((totalTargetKeys / totalSourceKeys) * 100);
+        return Math.min(100, Math.round((totalTargetKeys / totalSourceKeys) * 100));
     }
 
     /**

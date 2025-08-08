@@ -53,11 +53,11 @@
                 <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
                 <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document
                 </button>
-                <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()"
+                <button ng-if="uiTranslatesCtrl.data.length > 0" type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()"
                         ng-show="uiTranslatesCtrl.chosen">
                     <i class="glyphicon glyphicon-plus" style="margin-right: 5px;"></i>Add Language
                 </button>
-                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()"
+                <button ng-if="uiTranslatesCtrl.data.length > 0" type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()"
                         ng-show="uiTranslatesCtrl.chosen">
                     <i class="glyphicon glyphicon-globe" style="margin-right: 5px;"></i>Sync to Other Languages
                 </button>
@@ -100,6 +100,10 @@
         <div ng-if="uiTranslatesCtrl.syncResult.data.skippedSections.length">
             <strong>Already translated:</strong>
             <span class="label label-info" ng-repeat="section in uiTranslatesCtrl.syncResult.data.skippedSections">{{section}}</span>
+        </div>
+        <div ng-if="uiTranslatesCtrl.syncResult.data.removedExtraKeys > 0">
+            <strong>Removed extra keys:</strong>
+            <span class="label label-danger">{{uiTranslatesCtrl.syncResult.data.removedExtraKeys}} keys removed</span>
         </div>
     </div>
 
@@ -192,8 +196,10 @@
     </div>
 
     <!-- FLEXIBLE SYNC MODAL -->
-    <div class="modal" tabindex="-1" role="dialog" ng-if="uiTranslatesCtrl.showSyncModal">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" tabindex="-1" role="dialog" ng-class="{'in': uiTranslatesCtrl.showSyncModal}" 
+         ng-style="{'display': uiTranslatesCtrl.showSyncModal ? 'block' : 'none'}" 
+         ng-click="uiTranslatesCtrl.closeSyncModal()">
+        <div class="modal-dialog" role="document" ng-click="$event.stopPropagation()">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" ng-click="uiTranslatesCtrl.closeSyncModal()" aria-label="Close">
@@ -225,11 +231,15 @@
                                          style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;"
                                          ng-click="langInfo.expanded = !langInfo.expanded">
                                         <div style="display: flex; align-items: center; flex-grow: 1;">
+
+                                            <!-- <pre>{{langInfo|json}}</pre> todo: tyt -->
+
                                             <i class="glyphicon"
                                                ng-class="{'glyphicon-chevron-down': langInfo.expanded, 'glyphicon-chevron-right': !langInfo.expanded}"
                                                style="margin-right: 8px;"></i>
                                             <strong>{{locale | uppercase}}</strong>
-                                            <span class="badge" style="margin-left: 10px;">{{langInfo.totalMissingKeys}} missing keys</span>
+                                            <span class="badge badge-warning" style="margin-left: 10px;" ng-if="langInfo.totalMissingKeys > 0">{{langInfo.totalMissingKeys}} missing</span>
+                                            <span class="badge badge-danger" style="margin-left: 5px;" ng-if="langInfo.totalExtraKeys > 0">{{langInfo.totalExtraKeys}} extra</span>
                                             <div class="progress"
                                                  style="width: 200px; margin-left: 15px; margin-bottom: 0;">
                                                 <div class="progress-bar"
@@ -254,45 +264,188 @@
                                     <!-- Collapsible content showing missing sections -->
                                     <div class="panel-body" ng-show="langInfo.expanded">
                                         <!-- Debug info -->
-                                        <div class="alert alert-info" style="font-size: 11px; margin-bottom: 10px;">
+                                        <!-- <div class="alert alert-info" style="font-size: 11px; margin-bottom: 10px;">
                                             <strong>Debug:</strong>
                                             Missing sections: {{langInfo.missingSections.length || 0}} |
                                             Missing keys object: {{Object.keys(langInfo.missingKeys || {}).length}}
                                             sections |
-                                            Total missing: {{langInfo.totalMissingKeys}}
-                                        </div>
+                                            Total missing: {{langInfo.totalMissingKeys}} |
+                                            Extra sections: {{langInfo.extraSections.length || 0}} |
+                                            Total extra: {{langInfo.totalExtraKeys || 0}}
+                                        </div> -->
 
-                                        <div ng-if="langInfo.missingSections && langInfo.missingSections.length > 0">
-                                            <h6><strong>Missing Sections ({{langInfo.missingSections.length}}):</strong>
-                                            </h6>
-                                            <div class="row">
-                                                <div class="col-md-6" ng-repeat="section in langInfo.missingSections">
-                                                    <div class="well well-sm">
-                                                        <strong>{{section}}</strong>
-                                                        <span class="badge">{{langInfo.missingKeys[section].length}} keys</span>
+                                        <div ng-if="langInfo.missingSections && langInfo.missingSections.length > 0" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <!-- <div class="panel-heading" style="background-color: #f8f9fa; border-color: #dee2e6;">
+                                                    <h6 style="margin: 0; color: #6c757d;">
+                                                        <i class="glyphicon glyphicon-plus" style="margin-right: 8px; color: #28a745;"></i>
+                                                        Sections to Add ({{langInfo.missingSections.length}})
+                                                    </h6>
+                                                </div> -->
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Missing Keys</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="section in langInfo.missingSections" style="border-left: 4px solid #28a745;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{section}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{langInfo.missingKeys[section].length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{langInfo.missingKeys[section].join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div ng-if="langInfo.missingKeys && Object.keys(langInfo.missingKeys).length > (langInfo.missingSections ? langInfo.missingSections.length : 0)">
-                                            <h6><strong>Sections with Missing Keys:</strong></h6>
-                                            <div ng-repeat="(sectionKey, missingKeys) in langInfo.missingKeys"
-                                                 ng-if="!langInfo.missingSections || langInfo.missingSections.indexOf(sectionKey) === -1">
-                                                <div class="well well-sm">
-                                                    <strong>{{sectionKey}}</strong>
-                                                    <span class="badge">{{missingKeys.length}} missing keys</span>
-                                                    <div class="small text-muted" style="margin-top: 5px;">
-                                                        Missing: {{missingKeys.join(', ')}}
+                                        <div ng-if="langInfo.missingKeys && Object.keys(langInfo.missingKeys).length > (langInfo.missingSections ? langInfo.missingSections.length : 0)" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <div class="panel-heading" style="background-color: #f8f9fa; border-color: #dee2e6;">
+                                                    <h6 style="margin: 0; color: #6c757d;">
+                                                        <i class="glyphicon glyphicon-plus" style="margin-right: 8px; color: #28a745;"></i>
+                                                        Keys to Add
+                                                    </h6>
+                                                </div>
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Missing Keys</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="(sectionKey, missingKeys) in langInfo.missingKeys"
+                                                                    ng-if="!langInfo.missingSections || langInfo.missingSections.indexOf(sectionKey) === -1"
+                                                                    style="border-left: 4px solid #28a745;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{sectionKey}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{missingKeys.length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{missingKeys.join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div ng-if="(!langInfo.missingSections || langInfo.missingSections.length === 0) && (!langInfo.missingKeys || Object.keys(langInfo.missingKeys).length === 0)">
+                                        <!-- Extra keys/sections that will be removed -->
+                                        <div ng-if="langInfo.extraSections && langInfo.extraSections.length > 0" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <!-- <div class="panel-heading" style="background-color: #f8f9fa; border-color: #dee2e6;">
+                                                    <h6 style="margin: 0; color: #6c757d;">
+                                                        <i class="glyphicon glyphicon-trash" style="margin-right: 8px; color: #dc3545;"></i>
+                                                        Extra Sections to Remove ({{langInfo.extraSections.length}})
+                                                    </h6>
+                                                </div> -->
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Extra Keys</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="section in langInfo.extraSections" style="border-left: 4px solid #dc3545;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{section}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{langInfo.extraKeys[section].length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{langInfo.extraKeys[section].join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div ng-if="langInfo.extraKeys && Object.keys(langInfo.extraKeys).length > (langInfo.extraSections ? langInfo.extraSections.length : 0)" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <div class="panel-heading" style="background-color: #f8f9fa; border-color: #dee2e6;">
+                                                    <h6 style="margin: 0; color: #6c757d;">
+                                                        <i class="glyphicon glyphicon-trash" style="margin-right: 8px; color: #dc3545;"></i>
+                                                        Extra Keys to Remove
+                                                    </h6>
+                                                </div>
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Keys to Remove</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="(sectionKey, extraKeys) in langInfo.extraKeys"
+                                                                    ng-if="!langInfo.extraSections || langInfo.extraSections.indexOf(sectionKey) === -1"
+                                                                    style="border-left: 4px solid #dc3545;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{sectionKey}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{extraKeys.length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{extraKeys.join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div ng-if="(!langInfo.missingSections || langInfo.missingSections.length === 0) && (!langInfo.missingKeys || Object.keys(langInfo.missingKeys).length === 0) && (!langInfo.extraSections || langInfo.extraSections.length === 0) && (!langInfo.extraKeys || Object.keys(langInfo.extraKeys).length === 0)">
                                             <div class="alert alert-warning">
-                                                No missing sections or keys data found, but totalMissingKeys is
-                                                {{langInfo.totalMissingKeys}}.
+                                                No sync differences found, but totalMissingKeys is {{langInfo.totalMissingKeys}} and totalExtraKeys is {{langInfo.totalExtraKeys || 0}}.
                                             </div>
                                         </div>
                                     </div>
@@ -403,8 +556,10 @@
     </div>
 
     <!-- ADD LANGUAGE MODAL -->
-    <div class="modal" tabindex="-1" role="dialog" ng-if="uiTranslatesCtrl.isAddLanguageModalVisible()">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" tabindex="-1" role="dialog" ng-class="{'in': uiTranslatesCtrl.isAddLanguageModalVisible()}" 
+         ng-style="{'display': uiTranslatesCtrl.isAddLanguageModalVisible() ? 'block' : 'none'}" 
+         ng-click="uiTranslatesCtrl.closeAddLanguageModal()">
+        <div class="modal-dialog" role="document" ng-click="$event.stopPropagation()">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" ng-click="uiTranslatesCtrl.closeAddLanguageModal()"
@@ -493,6 +648,6 @@
     </div>
 
     <!-- Modal backdrop -->
-    <div class="modal-backdrop fade in"
-         ng-if="uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()"></div>
+    <div class="modal-backdrop fade" ng-class="{'in': uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()}"
+         ng-style="{'display': (uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()) ? 'block' : 'none'}"></div>
 </div>
