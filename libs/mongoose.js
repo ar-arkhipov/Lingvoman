@@ -7,14 +7,17 @@ mongoose.connect(config['mongouri']).then(() => {
 	console.log('error', err);
 });
 
+// mongoose.set('debug', true);
+
 const Schema = mongoose.Schema;
 
 // Schemas
 const translateSchema = new Schema({
-    projectID : Number,
-    projectAlphaId : String,
-    locale : String
-    }, {strict:false});
+    projectID: Number,
+    projectAlphaId: String,
+    locale: String,
+    translations: { type: Object, default: {} }
+}, { strict: false, minimize: false });
 
 const UserSchema = new Schema({
 	username: {

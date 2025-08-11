@@ -324,27 +324,56 @@
             }
         };
 
-//creating a fully new document if such ID is not already used
+//creating a fully new document with a fresh project ID (max existing + 1) and default locale 'en'
         vm.makeNew = function () {
-            if (vm.gettingForm.$valid) {
-                var alphaId = prompt('Alphabetical name of the project', 'project');
-                if (vm.id && vm.locale && alphaId) {
-                    TranslationService.makeNew(vm.id, vm.locale, alphaId).then(function (data) {
-                        if (data.status == 400) {
-                            $rootScope.$broadcast('growl', {
-                                type: 'danger',
-                                msg: 'This project already has translation file. Use it please.'
-                            });
-                        } else {
-                            $rootScope.$broadcast('growl', {
-                                type: 'success',
-                                msg: 'Document created'
-                            });
-                            vm.getTrans();
-                        }
-                    });
-                }
+            var alphaId = prompt('Alphabetical name of the project', 'project');
+            if (!alphaId) {
+                return;
             }
+
+            // Determine the next projectID based on the loaded projects list
+            var maxId = 0;
+            if (Array.isArray(vm.initList) && vm.initList.length > 0) {
+                maxId = vm.initList.reduce(function (currentMax, project) {
+                    var numericId = parseInt(project.projectID, 10);
+                    if (isNaN(numericId)) {
+                        return currentMax;
+                    }
+                    return Math.max(currentMax, numericId);
+                }, 0);
+            }
+            var newProjectId = maxId + 1;
+            var newLocale = 'en';
+
+            TranslationService.makeNew(newProjectId, newLocale, alphaId)
+                .then(function (data) {
+                    if (data && data.status == 400) {
+                        $rootScope.$broadcast('growl', {
+                            type: 'danger',
+                            msg: 'This project already has translation file. Use it please.'
+                        });
+                        return;
+                    }
+
+                    $rootScope.$broadcast('growl', {
+                        type: 'success',
+                        msg: 'Document created'
+                    });
+
+                    // Select the newly created project in UI
+                    vm.id = newProjectId;
+                    vm.locale = newLocale;
+                    vm.chosen = { projectID: newProjectId, projectAlphaId: alphaId, locales: [newLocale] };
+
+                    // Refresh projects and load the document
+                    vm.init();
+                    vm.getTrans();
+                    vm.copiesList = [];
+                })
+                .catch(function (error) {
+                    var message = (error && error.data && (error.data.message || error.data.error)) || 'Failed to create document';
+                    $rootScope.$broadcast('growl', { type: 'danger', msg: message });
+                });
         };
 
 // remove field from a group
