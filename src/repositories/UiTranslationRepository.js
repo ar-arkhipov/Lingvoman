@@ -1,4 +1,5 @@
 const { UiTran, UiReservedTran } = require('../../libs/mongoose.js');
+const languageService = require('../../libs/languageService');
 const { logger } = require('../utils/logger');
 const { DatabaseError, NotFoundError } = require('../utils/errors');
 
@@ -75,12 +76,20 @@ class UiTranslationRepository {
             ]);
 
             // Ensure 'en' is first in locales array for each project
-            data.forEach(project => {
+            data.forEach((project) => {
                 if (Array.isArray(project.locales)) {
                     project.locales.sort((a, b) => {
-                        if (a === 'en') return -1;
-                        if (b === 'en') return 1;
-                        return a.localeCompare(b);
+                        let result;
+
+                        if (a === 'en') {
+                            result = -1;
+                        } else if (b === 'en') {
+                            result = 1;
+                        } else {
+                            result = a.localeCompare(b);
+                        }
+
+                        return result;
                     });
                 }
             });
@@ -146,6 +155,18 @@ class UiTranslationRepository {
                 locale: doc.locale,
                 documentId: doc._id
             });
+
+            // If English, compute and persist baseHashMap
+
+            if (doc.locale === 'en') {
+                const baseHashMap = languageService.buildBaseHashMap(doc.translations || {});
+
+                await UiTran.updateOne(
+                    { _id: doc._id },
+                    { $set: { baseHashMap } }
+                );
+                doc.baseHashMap = baseHashMap;
+            }
 
             return doc;
         } catch (error) {
@@ -229,8 +250,14 @@ class UiTranslationRepository {
 
             // Validate section content
             sectionKeys.forEach((key) => {
-                if (typeof section[key] !== 'string' && section[key] !== null && section[key] !== undefined) {
-                    issues.push(`Invalid value type in section '${sectionKey}', key '${key}': expected string, got ${typeof section[key]}`);
+                const value = section[key];
+                const isString = typeof value === 'string';
+                const isNil = value === null || value === undefined;
+
+                if (!isString && !isNil) {
+                    issues.push(
+                        `Invalid value type in section '${sectionKey}', key '${key}': expected string, got ${typeof value}`
+                    );
                 }
             });
         });
@@ -273,9 +300,16 @@ class UiTranslationRepository {
                 });
             }
 
+            const updateSet = { translations };
+
+            // If English, recompute baseHashMap
+            if (locale === 'en') {
+                updateSet.baseHashMap = languageService.buildBaseHashMap(translations);
+            }
+
             const result = await UiTran.updateOne(
                 query,
-                { $set: { translations } },
+                { $set: updateSet },
                 { upsert: true }
             );
 
@@ -479,6 +513,11 @@ class UiTranslationRepository {
                 lastModified: new Date()
             };
 
+            // If English, recompute baseHashMap
+            if (locale === 'en') {
+                updateData.baseHashMap = languageService.buildBaseHashMap(mergedTranslations);
+            }
+
             // Add version increment if document exists
             if (!isNewDocument && existingDoc.version !== undefined) {
                 updateData.version = (existingDoc.version || 0) + 1;
@@ -562,6 +601,27 @@ class UiTranslationRepository {
 
             if (Object.keys(updateOperations).length === 0) {
                 throw new DatabaseError('No valid section updates provided', { projectID, locale });
+            }
+
+            // If English, we also need to update baseHashMap for the affected keys
+            if (locale === 'en') {
+                // Fetch current doc to rebuild only changed parts
+                const currentDoc = await this.findByProjectAndLocale(projectID, locale);
+                const currentTranslations = currentDoc?.translations || {};
+
+                // Apply the sectionUpdates to a clone to compute new hashes
+                const updatedTranslations = { ...currentTranslations };
+
+                Object.keys(sectionUpdates).forEach((sectionKey) => {
+                    updatedTranslations[sectionKey] = {
+                        ...(currentTranslations[sectionKey] || {}),
+                        ...sectionUpdates[sectionKey]
+                    };
+                });
+
+                const newBaseHashMap = languageService.buildBaseHashMap(updatedTranslations);
+
+                updateOperations['baseHashMap'] = newBaseHashMap;
             }
 
             const result = await UiTran.updateOne(

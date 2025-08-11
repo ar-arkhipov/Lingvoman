@@ -84,14 +84,6 @@
                             vm.data[n].translations = {};
                         }
                     }
-                    if (vm.data.length) {
-                        $rootScope.$broadcast('growl', {type: 'success', msg: 'Translations received!'});
-                    } else {
-                        $rootScope.$broadcast('growl', {
-                            type: 'danger',
-                            msg: 'Files not found. Check input data.'
-                        });
-                    }
                 });
                 vm.copiesList = [];
             }
@@ -150,10 +142,12 @@
                             if (!langInfo) return;
                             var missing = langInfo.totalMissingKeys || 0;
                             var extra = langInfo.totalExtraKeys || 0;
-                            var matched = Math.max(0, totalSourceKeys - missing);
+                            var changed = langInfo.totalChangedKeys || 0;
+                            // Treat changed keys as not matched to lower progress accordingly
+                            var matched = Math.max(0, totalSourceKeys - missing - changed);
                             var denom = Math.max(1, totalSourceKeys + extra);
                             langInfo.syncProgress = Math.max(0, Math.min(100, Math.floor((matched / denom) * 100)));
-                            langInfo.needsSync = missing > 0 || extra > 0;
+                            langInfo.needsSync = (missing > 0) || (extra > 0) || (changed > 0);
                         });
                     }
                 } catch (e) {

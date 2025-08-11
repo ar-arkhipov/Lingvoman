@@ -42,7 +42,7 @@ const UiTranslationDTOs = {
         locale: commonSchemas.locale,
         translations: Joi.object().pattern(
             Joi.string(),
-            Joi.object().pattern(Joi.string(), Joi.string())
+            Joi.object().pattern(Joi.string(), Joi.string().allow(''))
         ).required()
     }),
 

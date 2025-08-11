@@ -2,6 +2,7 @@
  * Language Service - Manage available languages and translation info
  */
 const { UiTran } = require('./mongoose.js');
+const crypto = require('crypto');
 
 class LanguageService {
     /**
@@ -14,7 +15,6 @@ class LanguageService {
             const docs = await UiTran.find({ projectID: parseInt(projectID) });
             
             const languages = {};
-            const sourceLanguage = null;
 
             docs.forEach((doc) => {
                 const locale = doc.locale;
@@ -94,6 +94,7 @@ class LanguageService {
 
             const allDocs = await UiTran.find({ projectID: parseInt(projectID) });
             const sourceTranslations = sourceDoc.translations;
+            const sourceBase = sourceDoc.baseHashMap || this.buildBaseHashMap(sourceTranslations || {});
             const targetLanguages = {};
 
             // Analyze each target language
@@ -103,6 +104,8 @@ class LanguageService {
                 const targetLocale = doc.locale;
                 const targetTranslations = doc.translations || {};
                 const syncDifferences = this.findSyncDifferences(sourceTranslations, targetTranslations);
+                const targetBase = doc.baseHashMap || {};
+                const changedInfo = this.findChangedFromBase(sourceBase, targetBase);
 
                 targetLanguages[targetLocale] = {
                     locale: targetLocale,
@@ -114,9 +117,15 @@ class LanguageService {
                     extraSections: syncDifferences.extra.extraSections,
                     extraKeys: syncDifferences.extra.extraKeys,
                     totalExtraKeys: syncDifferences.extra.totalExtraKeys,
+                    changedSections: changedInfo.changedSections,
+                    changedKeys: changedInfo.changedKeys,
+                    totalChangedKeys: changedInfo.totalChangedKeys,
                     syncProgress: this.calculateSyncProgress(sourceTranslations, targetTranslations),
                     lastModified: doc.updatedAt || doc.createdAt,
-                    needsSync: syncDifferences.missing.totalMissingKeys > 0 || syncDifferences.extra.totalExtraKeys > 0
+                    needsSync:
+                        syncDifferences.missing.totalMissingKeys > 0
+                        || syncDifferences.extra.totalExtraKeys > 0
+                        || changedInfo.totalChangedKeys > 0
                 };
             });
 
@@ -341,6 +350,109 @@ class LanguageService {
         });
 
         return count;
+    }
+
+    /**
+     * Normalize translation string for hashing comparisons
+     * - Trim
+     * - Collapse all whitespace sequences to a single space
+     * - Keep punctuation significant
+     * @param {string} value
+     * @returns {string}
+     */
+    normalizeTranslationString(value) {
+        if (typeof value !== 'string') {
+            return '';
+        }
+
+        return value.trim().replace(/\s+/g, ' ');
+    }
+
+    /**
+     * Build base hash map for a translations object.
+     * The returned object mirrors the structure of translations (section -> key -> hash).
+     * @param {Object} translations
+     * @returns {Object}
+     */
+    buildBaseHashMap(translations = {}) {
+        const result = {};
+
+        if (!translations || typeof translations !== 'object') return result;
+
+        Object.keys(translations).forEach((sectionKey) => {
+            const section = translations[sectionKey];
+            
+            if (!section || typeof section !== 'object') {
+                return;
+            }
+
+            const sectionHashMap = {};
+
+            
+            
+            Object.keys(section).forEach((key) => {
+                const value = section[key];
+                
+                if (typeof value !== 'string') {
+                    return;
+                }
+
+                const normalized = this.normalizeTranslationString(value);
+                const pathAndValue = `${sectionKey}/${key}|${normalized}`;
+                const hash = crypto.createHash('sha256').update(pathAndValue).digest('hex');
+
+                sectionHashMap[key] = hash;
+            });
+
+            
+            
+            if (Object.keys(sectionHashMap).length > 0) {
+                result[sectionKey] = sectionHashMap;
+            }
+        });
+
+        return result;
+    }
+
+    /**
+     * Compare two base hash maps and find changed keys (by hash inequality).
+     * Only considers keys present in the source (English) base map.
+     * If target (locale) base map doesn't have a key present in the source map,
+     * it's considered changed.
+     * @param {Object} sourceBaseHashMap - English base hash map
+     * @param {Object} targetBaseHashMap - Locale snapshot base hash map
+     * @returns {{changedSections: string[], changedKeys: Object, totalChangedKeys: number}}
+     */
+    findChangedFromBase(sourceBaseHashMap = {}, targetBaseHashMap = {}) {
+        const changedSections = [];
+        const changedKeys = {};
+        let totalChangedKeys = 0;
+
+        Object.keys(sourceBaseHashMap).forEach((sectionKey) => {
+            const sourceSection = sourceBaseHashMap[sectionKey] || {};
+            const targetSection = targetBaseHashMap[sectionKey] || {};
+
+            const sectionChanged = [];
+
+            
+            Object.keys(sourceSection).forEach((key) => {
+                const sourceHash = sourceSection[key];
+                const targetHash = targetSection[key];
+
+                if (!targetHash || targetHash !== sourceHash) {
+                    sectionChanged.push(key);
+                    totalChangedKeys++;
+                }
+            });
+
+            
+            if (sectionChanged.length > 0) {
+                changedSections.push(sectionKey);
+                changedKeys[sectionKey] = sectionChanged;
+            }
+        });
+
+        return { changedSections, changedKeys, totalChangedKeys };
     }
 
     /**

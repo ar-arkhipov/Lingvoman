@@ -118,6 +118,12 @@ class FlexibleTranslationSyncService {
                 targetDoc.translations || {}
             );
 
+            // Step 3b: Detect changed keys (English content changed vs. locale snapshot baseHashMap)
+            const sourceBase = sourceDoc.baseHashMap
+                || languageService.buildBaseHashMap(sourceDoc.translations || {});
+            const targetBase = targetDoc.baseHashMap || {};
+            const changedInfo = languageService.findChangedFromBase(sourceBase, targetBase);
+
             // Step 4: Remove extra keys that don't exist in master language
             if (syncDifferences.extra.totalExtraKeys > 0) {
                 progressTracker.updateProgress(jobId, {
@@ -131,8 +137,8 @@ class FlexibleTranslationSyncService {
                 console.log(`Removed ${syncDifferences.extra.totalExtraKeys} extra keys from ${targetLocale}`);
             }
 
-            // Check if there are missing keys to translate
-            if (syncDifferences.missing.totalMissingKeys === 0) {
+            // Check if there are missing or changed keys to translate
+            if (syncDifferences.missing.totalMissingKeys === 0 && changedInfo.totalChangedKeys === 0) {
                 progressTracker.updateProgress(jobId, {
                     status: 'completed',
                     progress: 100,
@@ -145,7 +151,9 @@ class FlexibleTranslationSyncService {
                         skippedSections: Object.keys(sourceDoc.translations),
                         totalSections: Object.keys(sourceDoc.translations).length,
                         totalKeys: languageService.countTotalKeys(sourceDoc.translations),
-                        removedExtraKeys: syncDifferences.extra.totalExtraKeys
+                        removedExtraKeys: syncDifferences.extra.totalExtraKeys,
+                        changedKeys: changedInfo.changedKeys,
+                        totalChangedKeys: changedInfo.totalChangedKeys
                     }
                 });
 
@@ -174,7 +182,7 @@ class FlexibleTranslationSyncService {
                 const translationProgressStart = 40 + ((processedSections / sectionKeys.length) * 40);
 
                 progressTracker.updateProgress(jobId, {
-                    progress: Math.round(translationProgressStart),
+                progress: Math.round(translationProgressStart),
                     step: `Translating section: ${sectionKey}`,
                     message: `Starting translation for section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
                 });
@@ -190,7 +198,7 @@ class FlexibleTranslationSyncService {
                 const translationProgressEnd = 40 + (((processedSections + 0.5) / sectionKeys.length) * 40);
 
                 progressTracker.updateProgress(jobId, {
-                    progress: Math.round(translationProgressEnd),
+                progress: Math.round(translationProgressEnd),
                     step: `Saving section: ${sectionKey}`,
                     message: `Saving translated section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
                 });
@@ -204,7 +212,7 @@ class FlexibleTranslationSyncService {
                 const translationProgressSaved = 40 + (((processedSections + 1) / sectionKeys.length) * 40);
 
                 progressTracker.updateProgress(jobId, {
-                    progress: Math.round(translationProgressSaved),
+                progress: Math.round(translationProgressSaved),
                     step: `Section saved: ${sectionKey}`,
                     message: `Section ${sectionKey} saved (${processedSections + 1}/${sectionKeys.length})`
                 });
@@ -212,7 +220,46 @@ class FlexibleTranslationSyncService {
                 processedSections++;
             }
 
-            // Step 5: Final database sync (sections are already saved individually)
+            // Step 6: Handle CHANGED keys (re-translate keys where English changed)
+            
+            
+            if (changedInfo.totalChangedKeys > 0) {
+                const changedSectionsList = Object.keys(changedInfo.changedKeys);
+                
+                for (const sectionKey of changedSectionsList) {
+                    const keys = changedInfo.changedKeys[sectionKey];
+                    const sectionSource = sourceDoc.translations[sectionKey] || {};
+                    const payload = {};
+
+                    keys.forEach((k) => {
+                        if (sectionSource[k] !== undefined) {
+                            payload[k] = sectionSource[k];
+                        }
+                    });
+
+                    if (Object.keys(payload).length === 0) {
+                        continue;
+                    }
+
+                    // Translate changed keys
+                    const translatedChanged = await this.openaiService.translateSection(
+                        payload,
+                        targetLocale,
+                        `UI section (changed): ${sectionKey}. Project: ${projectAlphaId} (ID: ${projectID})`
+                    );
+
+                    // Save immediately (merge into section)
+                    await this.saveSectionImmediately(
+                        projectID,
+                        targetLocale,
+                        targetDoc,
+                        sectionKey,
+                        { ...(targetDoc.translations[sectionKey] || {}), ...translatedChanged }
+                    );
+                }
+            }
+
+            // Step 7: Final database sync (sections are already saved individually)
             progressTracker.updateProgress(jobId, {
                 progress: 90,
                 step: 'Finalizing translations',
@@ -233,9 +280,20 @@ class FlexibleTranslationSyncService {
                         (key) => !translatedSections[key]
                     ),
                     totalSections: Object.keys(sourceDoc.translations).length,
-                    newTranslations: translatedSections
+                    newTranslations: translatedSections,
+                    changedKeys: changedInfo.changedKeys,
+                    totalChangedKeys: changedInfo.totalChangedKeys
                 }
             });
+
+            // Step 8: After successful sync, snapshot source baseHashMap into target's baseHashMap
+            const finalSourceBase = sourceDoc.baseHashMap
+                || languageService.buildBaseHashMap(sourceDoc.translations || {});
+
+            await UiTran.updateOne(
+                { projectID: parseInt(projectID), locale: targetLocale },
+                { $set: { baseHashMap: finalSourceBase } }
+            );
 
         } catch (error) {
             console.error(`Error in executeTranslationSync for job ${jobId}:`, error);
@@ -302,11 +360,16 @@ class FlexibleTranslationSyncService {
      */
     async createTargetDocument(projectID, projectAlphaId, targetLocale) {
         try {
+            // Try to fetch English baseHashMap to snapshot into the new target doc
+            const englishDoc = await this.getDocument(projectID, 'en');
+            const englishBase = englishDoc?.baseHashMap || languageService.buildBaseHashMap(englishDoc?.translations || {});
+
             const newDoc = {
                 projectID: parseInt(projectID),
                 projectAlphaId,
                 locale: targetLocale,
-                translations: {}
+                translations: {},
+                baseHashMap: englishBase
             };
 
             const createdDoc = await UiTran.create(newDoc);
@@ -591,10 +654,16 @@ class FlexibleTranslationSyncService {
                 targetDoc.translations
             );
 
+            const sourceBase = sourceDoc.baseHashMap || languageService.buildBaseHashMap(sourceDoc.translations || {});
+            const targetBase = targetDoc.baseHashMap || {};
+            const changedInfo = languageService.findChangedFromBase(sourceBase, targetBase);
+
             return {
                 hasSource: true,
                 hasTarget: true,
-                syncNeeded: syncDifferences.missing.totalMissingKeys > 0 || syncDifferences.extra.totalExtraKeys > 0,
+                syncNeeded: syncDifferences.missing.totalMissingKeys > 0
+                    || syncDifferences.extra.totalExtraKeys > 0
+                    || changedInfo.totalChangedKeys > 0,
                 sourceSections: Object.keys(sourceDoc.translations),
                 targetSections: Object.keys(targetDoc.translations),
                 missingSections: syncDifferences.missing.missingSections,
@@ -604,7 +673,12 @@ class FlexibleTranslationSyncService {
                 extraKeys: syncDifferences.extra.extraKeys,
                 totalExtraKeys: syncDifferences.extra.totalExtraKeys,
                 syncProgress: languageService.calculateSyncProgress(sourceDoc.translations, targetDoc.translations),
-                upToDate: syncDifferences.missing.totalMissingKeys === 0 && syncDifferences.extra.totalExtraKeys === 0
+                upToDate: syncDifferences.missing.totalMissingKeys === 0
+                    && syncDifferences.extra.totalExtraKeys === 0
+                    && changedInfo.totalChangedKeys === 0,
+                changedSections: changedInfo.changedSections,
+                changedKeys: changedInfo.changedKeys,
+                totalChangedKeys: changedInfo.totalChangedKeys
             };
 
         } catch (error) {
