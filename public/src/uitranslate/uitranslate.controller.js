@@ -142,6 +142,23 @@
 
             UiTranslateFactory.getUnsyncInfo(vm.chosen.projectID).then(function (unsyncData) {
                 vm.unsyncedInfo = unsyncData;
+                // Recalculate progress on the client to ensure consistency
+                try {
+                    if (vm.unsyncedInfo && vm.unsyncedInfo.sourceInfo && vm.unsyncedInfo.targetLanguages) {
+                        var totalSourceKeys = vm.unsyncedInfo.sourceInfo.totalKeys || 0;
+                        angular.forEach(vm.unsyncedInfo.targetLanguages, function(langInfo) {
+                            if (!langInfo) return;
+                            var missing = langInfo.totalMissingKeys || 0;
+                            var extra = langInfo.totalExtraKeys || 0;
+                            var matched = Math.max(0, totalSourceKeys - missing);
+                            var denom = Math.max(1, totalSourceKeys + extra);
+                            langInfo.syncProgress = Math.max(0, Math.min(100, Math.floor((matched / denom) * 100)));
+                            langInfo.needsSync = missing > 0 || extra > 0;
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Progress recompute failed:', e);
+                }
             }).catch(function () {
                 $rootScope.$broadcast('growl', {
                     type: 'danger',
@@ -488,6 +505,16 @@
         vm.loadCommonLanguages = function () {
             var availableLanguages = LanguageUtils.getAvailableLanguages();
             vm.availableLanguages = ProjectService.loadCommonLanguages(vm.chosen, availableLanguages);
+        };
+
+        /**
+         * Quick check used by navbar to decide if "Add Language" should be shown
+         */
+        vm.canAddLanguage = function () {
+            if (!vm.chosen) return false;
+            var availableLanguages = LanguageUtils.getAvailableLanguages();
+            var remaining = ProjectService.loadCommonLanguages(vm.chosen, availableLanguages);
+            return Array.isArray(remaining) && remaining.length > 0;
         };
 
         /**

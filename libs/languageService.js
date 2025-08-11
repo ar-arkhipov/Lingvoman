@@ -14,7 +14,7 @@ class LanguageService {
             const docs = await UiTran.find({ projectID: parseInt(projectID) });
             
             const languages = {};
-            let sourceLanguage = null;
+            const sourceLanguage = null;
 
             docs.forEach((doc) => {
                 const locale = doc.locale;
@@ -287,8 +287,7 @@ class LanguageService {
 
         if (totalSourceKeys === 0) return 100;
 
-        // Count only keys that exist in both source and target.
-        // Extra keys in target should NOT improve progress, and missing keys reduce it.
+        // Count keys present in both (matched)
         let matchedKeys = 0;
 
         Object.keys(sourceTranslations).forEach((sectionKey) => {
@@ -304,7 +303,25 @@ class LanguageService {
             }
         });
 
-        const progress = Math.round((matchedKeys / totalSourceKeys) * 100);
+        // Count extra keys present only in target
+        let extraKeysCount = 0;
+
+        Object.keys(targetTranslations).forEach((sectionKey) => {
+            const targetSection = targetTranslations[sectionKey];
+            const sourceSection = sourceTranslations[sectionKey] || {};
+
+            if (targetSection && typeof targetSection === 'object') {
+                Object.keys(targetSection).forEach((key) => {
+                    if (!Object.prototype.hasOwnProperty.call(sourceSection, key)) {
+                        extraKeysCount++;
+                    }
+                });
+            }
+        });
+
+        // Extras reduce progress by increasing denominator
+        const denominator = totalSourceKeys + extraKeysCount;
+        const progress = Math.floor((matchedKeys / denominator) * 100);
 
         return Math.max(0, Math.min(100, progress));
     }

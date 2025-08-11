@@ -53,14 +53,19 @@
                 <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
                 <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document
                 </button>
-                <button ng-if="uiTranslatesCtrl.data.length > 0" type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()"
+                <button ng-if="uiTranslatesCtrl.data.length > 0 && uiTranslatesCtrl.canAddLanguage()" type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()"
                         ng-show="uiTranslatesCtrl.chosen">
                     <i class="glyphicon glyphicon-plus" style="margin-right: 5px;"></i>Add Language
                 </button>
-                <button ng-if="uiTranslatesCtrl.data.length > 0" type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()"
+                <button ng-if="uiTranslatesCtrl.data.length > 0 && uiTranslatesCtrl.chosen && uiTranslatesCtrl.chosen.locales && uiTranslatesCtrl.chosen.locales.length > 1"
+                        type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()"
                         ng-show="uiTranslatesCtrl.chosen">
                     <i class="glyphicon glyphicon-globe" style="margin-right: 5px;"></i>Sync to Other Languages
                 </button>
+                <span ng-if="uiTranslatesCtrl.data.length > 0 && uiTranslatesCtrl.chosen && uiTranslatesCtrl.chosen.locales && uiTranslatesCtrl.chosen.locales.length <= 1"
+                      class="text-muted" style="margin-left: 10px;">
+                    Add another language to enable sync
+                </span>
             </form>
 
             <form class="navbar-form pull-right">
@@ -387,19 +392,22 @@
                                 <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages"
                                      ng-if="!langInfo.needsSync" class="panel panel-success">
                                     <div class="panel-heading" style="display: flex; align-items: center;">
-                                        <div style="display: flex; align-items: center; flex-grow: 1;">
+                                        <!-- Left: locale info -->
+                                        <div style="display: flex; align-items: center;">
                                             <i class="glyphicon glyphicon-ok" style="margin-right: 8px;"></i>
                                             <strong>{{locale | uppercase}}</strong>
-                                            <span class="badge badge-success"
-                                                  style="margin-left: 10px;">Up to date</span>
-                                            <div class="progress"
-                                                 style="width: 200px; margin-left: 15px; margin-bottom: 0;">
-                                                <div class="progress-bar progress-bar-success text-center"
-                                                     style="width: 100%;">
+                                            <span class="badge badge-success" style="margin-left: 10px;">Up to date</span>
+                                        </div>
+                                        <!-- Center: progress bar -->
+                                        <div style="flex: 1; display: flex; justify-content: center;">
+                                            <div class="progress" style="width: 200px; margin: 0;">
+                                                <div class="progress-bar progress-bar-success text-center" style="width: 100%;">
                                                     100%
                                                 </div>
                                             </div>
                                         </div>
+                                        <!-- Right spacer for symmetry -->
+                                        <div style="width: 1px;"></div>
                                     </div>
                                 </div>
 
@@ -472,7 +480,7 @@
                         <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">Close</span>
                         <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">Hide</span>
                     </button>
-                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.syncAllLanguages()"
+                    <!-- <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.syncAllLanguages()"
                             ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !uiTranslatesCtrl.unsyncedInfo || uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0"
                             ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length > 0">
                         <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">
@@ -481,7 +489,7 @@
                         <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">
                             <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Syncing All...
                         </span>
-                    </button>
+                    </button> -->
                 </div>
             </div>
         </div>
