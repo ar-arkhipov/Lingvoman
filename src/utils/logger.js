@@ -95,6 +95,18 @@ if (process.env.NODE_ENV !== 'production') {
     }));
 }
 
+// Optional global silencing via env flag for tests/CI
+const enableLogsEnv = (process.env.ENABLE_LOGS || 'true').toLowerCase();
+const logsEnabled = !(enableLogsEnv === 'false' || enableLogsEnv === '0');
+
+if (!logsEnabled) {
+    logger.silent = true;
+    // Also silence individual transports to be safe
+    logger.transports.forEach((t) => {
+        t.silent = true;
+    });
+}
+
     // Create request logger middleware
 
 const requestLogger = (req, res, next) => {

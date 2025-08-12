@@ -2,6 +2,7 @@
  * Progress Tracking Service - AWS Lambda Compatible
  * Uses in-memory storage for job progress tracking
  */
+const { logger } = require('../src/utils/logger');
 
 class ProgressTracker {
     constructor() {
@@ -38,7 +39,7 @@ class ProgressTracker {
             this.cleanupJob(jobId);
         }, this.jobTimeout);
 
-        console.log(`Created job ${jobId} for project ${jobData.projectID} → ${jobData.targetLocale}`);
+        logger.info(`Created job ${jobId} for project ${jobData.projectID} → ${jobData.targetLocale}`);
 
         return jobId;
     }
@@ -52,7 +53,7 @@ class ProgressTracker {
         const job = this.jobs.get(jobId);
 
         if (!job) {
-            console.warn(`Job ${jobId} not found for progress update`);
+            logger.warn(`Job ${jobId} not found for progress update`);
 
             return false;
         }
@@ -76,7 +77,7 @@ class ProgressTracker {
             this.moveToHistory(jobId);
         }
 
-        console.log(`Job ${jobId}: ${job.progress}% - ${update.message || job.message}`);
+        logger.info(`Job ${jobId}: ${job.progress}% - ${update.message || job.message}`);
 
         return true;
     }

@@ -54,9 +54,9 @@
     "logs:prod": "sam logs --stack-name lingvoman-prod -n LingvomanApi --tail",
     "sam:local": "sam local start-api --warm-containers EAGER",
     "sam:invoke": "sam local invoke LingvomanApi --event events/api-event.json",
-    "test": "NODE_ENV=test mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
+    "test": "NODE_ENV=test ENABLE_LOGS=false mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
     "test:watch": "npm run test -- --watch",
-    "test:coverage": "NODE_ENV=test nyc --reporter=text --reporter=lcov mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
+    "test:coverage": "NODE_ENV=test ENABLE_LOGS=false nyc --reporter=text --reporter=lcov mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
     "coverage:check": "nyc check-coverage --lines 70 --branches 60 --functions 70 --statements 70"
   },
   "repository": {
