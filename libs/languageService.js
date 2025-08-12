@@ -165,7 +165,7 @@ class LanguageService {
         let totalMissingKeys = 0;
         let totalExtraKeys = 0;
 
-        // Find missing keys (existing logic from findMissingTranslations)
+        // Find missing keys by checking key existence (not truthiness)
         Object.keys(masterTranslations).forEach((sectionKey) => {
             const masterSection = masterTranslations[sectionKey];
             const targetSection = targetTranslations[sectionKey];
@@ -180,7 +180,7 @@ class LanguageService {
                 const sectionMissingKeys = [];
 
                 Object.keys(masterSection).forEach((key) => {
-                    if (!targetSection[key]) {
+                    if (!Object.prototype.hasOwnProperty.call(targetSection, key)) {
                         sectionMissingKeys.push(key);
                         totalMissingKeys++;
                     }
@@ -197,7 +197,7 @@ class LanguageService {
             }
         });
 
-        // Find extra keys (NEW - keys that exist in target but not in master)
+        // Find extra keys (keys that exist in target but not in master) using existence check
         Object.keys(targetTranslations).forEach((sectionKey) => {
             const targetSection = targetTranslations[sectionKey];
             const masterSection = masterTranslations[sectionKey];
@@ -212,7 +212,7 @@ class LanguageService {
                 const sectionExtraKeys = [];
 
                 Object.keys(targetSection).forEach((key) => {
-                    if (!masterSection[key]) {
+                    if (!Object.prototype.hasOwnProperty.call(masterSection, key)) {
                         sectionExtraKeys.push(key);
                         totalExtraKeys++;
                     }
