@@ -345,6 +345,88 @@ describe('UI Translations API (integration)', function () {
     expect(targetLanguages.fr.totalMissingKeys).to.equal(0);
     expect(targetLanguages.fr.totalChangedKeys || 0).to.equal(0);
   });
+    it('[sync] should remove extra sections and keys from target during sync', async () => {
+        const pid = 901;
+
+        // Seed EN with a single key
+        await UiTran.create({
+            projectID: pid,
+            projectAlphaId: 'proj-901',
+            locale: 'en',
+            translations: { sect: { a: 'Hello' } }
+        });
+
+        // Seed FR with the valid key plus extra section/key
+        await UiTran.create({
+            projectID: pid,
+            projectAlphaId: 'proj-901',
+            locale: 'fr',
+            translations: { sect: { a: 'Bonjour', extra: 'EXTRA' }, extraSection: { x: 'EXTRA X' } }
+        });
+
+        // Snapshot EN baseHashMap into FR to avoid changed-keys path interfering with this test
+        const enDoc = await UiTran.findOne({ projectID: pid, locale: 'en' });
+        const expectedBase = languageService.buildBaseHashMap(enDoc.translations || {});
+
+        await UiTran.updateOne(
+            { projectID: pid, locale: 'fr' },
+            { $set: { baseHashMap: expectedBase } }
+        );
+
+        // Stub translator to avoid external OpenAI calls (should not be used in this scenario)
+        const flexibleTranslationSync = require('../../libs/flexibleTranslationSync');
+
+        flexibleTranslationSync.openaiService = {
+            translateSection: async (payload, targetLocale) => payload
+        };
+
+        // Start sync job EN -> FR
+        const startRes = await request(app)
+            .post('/api/uitranslate/sync-flexible')
+            .set('x-access-token', token)
+            .send({ projectID: pid, projectAlphaId: 'proj-901', targetLocale: 'fr', sourceLocale: 'en' });
+
+        expect(startRes.status).to.equal(202);
+        const jobId = startRes.body.jobId;
+
+        // Poll until completed
+        let status = null;
+        let result = null;
+
+        for (let i = 0; i < 40; i++) {
+            const pr = await request(app)
+                .get(`/api/uitranslate/sync-progress/${jobId}`)
+                .set('x-access-token', token);
+
+            expect(pr.status).to.equal(200);
+            status = pr.body.status;
+            result = pr.body.result || null;
+
+            if (status === 'completed' || status === 'failed') break;
+
+            await new Promise((r) => setTimeout(r, 25));
+        }
+
+        expect(status).to.equal('completed');
+
+        // FR should no longer have extra section/key
+
+        const frDoc = await UiTran.findOne({ projectID: pid, locale: 'fr' });
+
+        expect(frDoc).to.exist;
+        expect(frDoc.translations).to.be.an('object');
+        // Always removed
+        expect(frDoc.translations).to.not.have.property('extraSection');
+        // If sect exists, it should not contain the extra key
+
+        if (frDoc.translations.sect) {
+            expect(frDoc.translations.sect).to.not.have.property('extra');
+        }
+
+        // Result should report two removed extra keys (sect.extra and extraSection.x)
+
+        expect(result && result.removedExtraKeys).to.equal(2);
+    });
 });
 
 

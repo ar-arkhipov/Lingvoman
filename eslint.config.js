@@ -1,6 +1,6 @@
 // ESLint v9+ flat config with custom rules and ignores only
 
-export default [
+module.exports = [
   {
     ignores: [
       'migration/*',
@@ -23,7 +23,7 @@ export default [
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
-      sourceType: 'module',
+        sourceType: 'commonjs',
       globals: {
         _: true,
         util: true,
