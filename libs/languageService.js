@@ -148,49 +148,7 @@ class LanguageService {
         }
     }
 
-    /**
-     * Find missing translations between source and target
-     * @param {Object} sourceTranslations - Source translations
-     * @param {Object} targetTranslations - Target translations
-     * @returns {Object} Missing translation info
-     */
-    findMissingTranslations(sourceTranslations, targetTranslations) {
-        const missingSections = [];
-        const missingKeys = {};
-        let totalMissingKeys = 0;
-
-        Object.keys(sourceTranslations).forEach((sectionKey) => {
-            const sourceSection = sourceTranslations[sectionKey];
-            const targetSection = targetTranslations[sectionKey];
-
-            if (!targetSection) {
-                // Entire section missing
-                missingSections.push(sectionKey);
-                totalMissingKeys += Object.keys(sourceSection).length;
-                missingKeys[sectionKey] = Object.keys(sourceSection);
-            } else {
-                // Check for missing keys within section
-                const sectionMissingKeys = [];
-
-                Object.keys(sourceSection).forEach((key) => {
-                    if (!targetSection[key]) {
-                        sectionMissingKeys.push(key);
-                        totalMissingKeys++;
-                    }
-                });
-
-                if (sectionMissingKeys.length > 0) {
-                    missingKeys[sectionKey] = sectionMissingKeys;
-                }
-            }
-        });
-
-        return {
-            missingSections,
-            missingKeys,
-            totalMissingKeys
-        };
-    }
+    
 
     /**
      * Find sync differences between master and target languages

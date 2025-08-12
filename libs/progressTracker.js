@@ -144,25 +144,7 @@ class ProgressTracker {
         }
     }
 
-    /**
-     * Get all active jobs (for monitoring)
-     * @returns {Array} Active jobs
-     */
-    getActiveJobs() {
-        return Array.from(this.jobs.values());
-    }
-
-    /**
-     * Get job statistics
-     * @returns {Object} Statistics
-     */
-    getStats() {
-        return {
-            activeJobs: this.jobs.size,
-            completedJobs: this.jobHistory.size,
-            totalJobs: this.jobs.size + this.jobHistory.size
-        };
-    }
+    
 
     /**
      * Generate unique job ID (simple implementation without uuid for now)

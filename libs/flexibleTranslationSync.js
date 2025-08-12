@@ -228,6 +228,7 @@ class FlexibleTranslationSyncService {
                     });
 
                     const translatedChunk = await this.openaiService.translateSection(
+
                         payload,
                         targetLocale,
                         `UI section: ${sectionKey}.`
@@ -310,35 +311,7 @@ class FlexibleTranslationSyncService {
         }
     }
 
-    /**
-     * Build missing sections object from source translations and missing info
-     * @param {Object} sourceTranslations - Source translations
-     * @param {Object} missingInfo - Missing translation info (from syncDifferences.missing)
-     * @returns {Object} Missing sections to translate
-     */
-    buildMissingSections(sourceTranslations, missingInfo) {
-        const missingSections = {};
-
-        Object.keys(missingInfo.missingKeys).forEach((sectionKey) => {
-            const missingKeysInSection = missingInfo.missingKeys[sectionKey];
-            const sourceSection = sourceTranslations[sectionKey];
-            
-            if (missingInfo.missingSections.includes(sectionKey)) {
-                // Entire section is missing
-                missingSections[sectionKey] = sourceSection;
-            } else {
-                // Partial section missing
-                const partialSection = {};
-
-                missingKeysInSection.forEach((key) => {
-                    partialSection[key] = sourceSection[key];
-                });
-                missingSections[sectionKey] = partialSection;
-            }
-        });
-
-        return missingSections;
-    }
+    
 
     /**
      * Get a translation document by project ID and locale

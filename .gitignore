@@ -10,3 +10,4 @@ logs
 .aws-sam
 /.aws-sam/
 /.serverless/
+coverage

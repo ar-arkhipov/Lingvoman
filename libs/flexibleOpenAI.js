@@ -17,66 +17,7 @@ class FlexibleOpenAIService {
         }
     }
 
-    /**
-     * Translate sections to target language with progress tracking
-     * @param {Object} sections - Sections to translate
-     * @param {string} targetLocale - Target language code (e.g., 'fr', 'de', 'es')
-     * @param {string} context - Translation context
-     * @param {Function} progressCallback - Progress update callback
-     * @returns {Promise<Object>} Translated sections
-     */
-    async translateSections(sections, targetLocale, context = '', progressCallback = null) {
-        if (!this.isEnabled) {
-            throw new Error('OpenAI API key not configured. Translation features are disabled.');
-        }
-        
-        try {
-            const sectionKeys = Object.keys(sections);
-            const translatedSections = {};
-            let processedSections = 0;
-
-            for (const sectionKey of sectionKeys) {
-                const sectionContent = sections[sectionKey];
-
-                console.log(`Translating section: ${sectionKey} to ${targetLocale}`);
-                
-                // Update progress
-                if (progressCallback) {
-                    progressCallback({
-                        step: `Translating section: ${sectionKey}`,
-                        progress: Math.round((processedSections / sectionKeys.length) * 100),
-                        currentSection: sectionKey,
-                        totalSections: sectionKeys.length,
-                        processedSections
-                    });
-                }
-                
-                const translatedContent = await this.translateSection(
-                    sectionContent, 
-                    targetLocale,
-                    `UI section: ${sectionKey}. ${context}`
-                );
-                
-                translatedSections[sectionKey] = translatedContent;
-                processedSections++;
-            }
-
-            // Final progress update
-            if (progressCallback) {
-                progressCallback({
-                    step: 'Translation completed',
-                    progress: 100,
-                    processedSections: sectionKeys.length,
-                    totalSections: sectionKeys.length
-                });
-            }
-
-            return translatedSections;
-        } catch (error) {
-            console.error('Error in translateSections:', error);
-            throw new Error(`Translation failed: ${error.message}`);
-        }
-    }
+    
 
     /**
      * Translate a single section to target language
@@ -192,36 +133,7 @@ ${JSON.stringify(
         }
     }
 
-    /**
-     * Validate translation quality
-     * @param {string} original - Original text
-     * @param {string} translated - Translated text
-     * @returns {boolean} True if valid
-     */
-    validateTranslation(original, translated) {
-        const placeholderPatterns = [
-            /\{[^}]+\}/g,
-            /\{\{[^}]+\}\}/g,
-            /%[sd%]/g,
-            /<[^>]+>/g,
-            /\$\{[^}]+\}/g
-        ];
-
-        for (const pattern of placeholderPatterns) {
-            const originalMatches = (original.match(pattern) || []).sort();
-            const translatedMatches = (translated.match(pattern) || []).sort();
-            
-            if (JSON.stringify(originalMatches) !== JSON.stringify(translatedMatches)) {
-                console.warn(`Placeholder mismatch in translation:
-                    Original: ${original}
-                    Translated: ${translated}`);
-
-                return false;
-            }
-        }
-
-        return true;
-    }
+    
 }
 
 module.exports = FlexibleOpenAIService; 
