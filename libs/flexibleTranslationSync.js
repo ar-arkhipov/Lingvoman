@@ -160,78 +160,43 @@ class FlexibleTranslationSyncService {
                 return;
             }
 
-            // Step 5: Translate missing sections with immediate saving
-            const missingSections = this.buildMissingSections(sourceDoc.translations, syncDifferences.missing);
-            const sectionKeys = Object.keys(missingSections);
+            // Step 5: Compute union of missing and changed keys per section
+            const keysToUpdate = languageService.computeKeysToUpdate(
+                syncDifferences.missing.missingKeys,
+                changedInfo.changedKeys
+            );
+
+            // Flatten counts for progress and messaging
+            const sectionKeys = Object.keys(keysToUpdate);
+            const totalKeysToTranslate = sectionKeys.reduce((sum, s) => sum + (keysToUpdate[s]?.length || 0), 0);
+            let processedKeys = 0;
             const translatedSections = {};
-            let processedSections = 0;
-            
+
             progressTracker.updateProgress(jobId, {
                 progress: 40,
                 step: 'Starting translation',
-                message: `Translating ${syncDifferences.missing.totalMissingKeys} keys in ${sectionKeys.length} sections`
+                message: `Translating ${totalKeysToTranslate} keys across ${sectionKeys.length} sections`
             });
 
-            // Translate and save each section immediately
+            // Optional chunking size to avoid very large payloads
+            const CHUNK_SIZE = 200; // adjust if needed
+
+            // Translate only keys that need updates and save immediately
             for (const sectionKey of sectionKeys) {
-                const sectionContent = missingSections[sectionKey];
+                const keys = keysToUpdate[sectionKey] || [];
 
-                console.log(`Translating section: ${sectionKey} to ${targetLocale}`);
+                if (keys.length === 0) {
+                    continue;
+                }
 
-                // Update progress before translation
-                const translationProgressStart = 40 + ((processedSections / sectionKeys.length) * 40);
+                const sectionSource = sourceDoc.translations[sectionKey] || {};
 
-                progressTracker.updateProgress(jobId, {
-                progress: Math.round(translationProgressStart),
-                    step: `Translating section: ${sectionKey}`,
-                    message: `Starting translation for section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
-                });
+                for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
+                    const chunkKeys = keys.slice(i, i + CHUNK_SIZE);
 
-                // Translate the section
-                const translatedContent = await this.openaiService.translateSection(
-                    sectionContent, 
-                    targetLocale,
-                    `UI section: ${sectionKey}. Project: ${projectAlphaId} (ID: ${projectID})`
-                );
-
-                // Update progress after translation
-                const translationProgressEnd = 40 + (((processedSections + 0.5) / sectionKeys.length) * 40);
-
-                progressTracker.updateProgress(jobId, {
-                progress: Math.round(translationProgressEnd),
-                    step: `Saving section: ${sectionKey}`,
-                    message: `Saving translated section: ${sectionKey} (${processedSections + 1}/${sectionKeys.length})`
-                });
-
-                translatedSections[sectionKey] = translatedContent;
-
-                // Save immediately
-                await this.saveSectionImmediately(projectID, targetLocale, targetDoc, sectionKey, translatedContent);
-
-                // Update progress after saving
-                const translationProgressSaved = 40 + (((processedSections + 1) / sectionKeys.length) * 40);
-
-                progressTracker.updateProgress(jobId, {
-                progress: Math.round(translationProgressSaved),
-                    step: `Section saved: ${sectionKey}`,
-                    message: `Section ${sectionKey} saved (${processedSections + 1}/${sectionKeys.length})`
-                });
-
-                processedSections++;
-            }
-
-            // Step 6: Handle CHANGED keys (re-translate keys where English changed)
-            
-            
-            if (changedInfo.totalChangedKeys > 0) {
-                const changedSectionsList = Object.keys(changedInfo.changedKeys);
-                
-                for (const sectionKey of changedSectionsList) {
-                    const keys = changedInfo.changedKeys[sectionKey];
-                    const sectionSource = sourceDoc.translations[sectionKey] || {};
                     const payload = {};
 
-                    keys.forEach((k) => {
+                    chunkKeys.forEach((k) => {
                         if (sectionSource[k] !== undefined) {
                             payload[k] = sectionSource[k];
                         }
@@ -241,21 +206,55 @@ class FlexibleTranslationSyncService {
                         continue;
                     }
 
-                    // Translate changed keys
-                    const translatedChanged = await this.openaiService.translateSection(
+                    const startProgress = 40 + Math.floor(
+                        (processedKeys / Math.max(1, totalKeysToTranslate)) * 40
+                    );
+                    const startIndex = processedKeys + 1;
+                    const endIndex = processedKeys + Object.keys(payload).length;
+                    const rangeMsg = `Keys ${startIndex}-${endIndex} of ${totalKeysToTranslate}`;
+
+                    progressTracker.updateProgress(jobId, {
+                        progress: startProgress,
+                        step: `Translating: ${sectionKey}`,
+                        message: rangeMsg
+                    });
+
+                    const translatedChunk = await this.openaiService.translateSection(
                         payload,
                         targetLocale,
-                        `UI section (changed): ${sectionKey}. Project: ${projectAlphaId} (ID: ${projectID})`
+                        `UI section: ${sectionKey}.`
                     );
 
-                    // Save immediately (merge into section)
+                    // Merge translated chunk into in-memory collection for summary
+                    translatedSections[sectionKey] = {
+                        ...(translatedSections[sectionKey] || {}),
+                        ...translatedChunk
+                    };
+
+                    // Save immediately (merge into existing section)
                     await this.saveSectionImmediately(
                         projectID,
                         targetLocale,
                         targetDoc,
                         sectionKey,
-                        { ...(targetDoc.translations[sectionKey] || {}), ...translatedChanged }
+                        {
+                            ...(targetDoc.translations[sectionKey] || {}),
+                            ...translatedChunk
+                        }
                     );
+
+                    processedKeys += Object.keys(payload).length;
+
+                    const endProgress = 40 + Math.floor(
+                        (processedKeys / Math.max(1, totalKeysToTranslate)) * 40
+                    );
+                    const processedMsg = `Processed ${processedKeys}/${totalKeysToTranslate} keys`;
+
+                    progressTracker.updateProgress(jobId, {
+                        progress: endProgress,
+                        step: `Saved: ${sectionKey}`,
+                        message: processedMsg
+                    });
                 }
             }
 
@@ -271,10 +270,12 @@ class FlexibleTranslationSyncService {
                 status: 'completed',
                 progress: 100,
                 step: 'Sync completed',
-                message: `Successfully translated ${Object.keys(translatedSections).length} sections to ${targetLocale}`,
+                message: `Successfully translated ${totalKeysToTranslate} keys in ${Object.keys(
+                    translatedSections
+                ).length} sections to ${targetLocale}`,
                 result: {
                     translatedSections: Object.keys(translatedSections),
-                    totalTranslatedKeys: syncDifferences.missing.totalMissingKeys,
+                    totalTranslatedKeys: totalKeysToTranslate,
                     removedExtraKeys: syncDifferences.extra.totalExtraKeys,
                     skippedSections: Object.keys(sourceDoc.translations).filter(
                         (key) => !translatedSections[key]

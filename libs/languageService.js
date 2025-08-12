@@ -456,6 +456,35 @@ class LanguageService {
     }
 
     /**
+     * Compute the union of keys that need updating per section.
+     * Combines missing keys and changed-from-base keys without duplicates.
+     * @param {Object} missingKeys - Map of section -> array of missing keys
+     * @param {Object} changedKeys - Map of section -> array of changed keys
+     * @returns {Object} Map of section -> array of keys to update
+     */
+    computeKeysToUpdate(missingKeys = {}, changedKeys = {}) {
+        const result = {};
+
+        const sectionSet = new Set([
+            ...Object.keys(missingKeys || {}),
+            ...Object.keys(changedKeys || {})
+        ]);
+
+        sectionSet.forEach((sectionKey) => {
+            const uniqueKeys = new Set([
+                ...((missingKeys && missingKeys[sectionKey]) || []),
+                ...((changedKeys && changedKeys[sectionKey]) || [])
+            ]);
+
+            if (uniqueKeys.size > 0) {
+                result[sectionKey] = Array.from(uniqueKeys);
+            }
+        });
+
+        return result;
+    }
+
+    /**
      * Validate if a locale code is valid format
      * @param {string} locale - Locale code to validate
      * @returns {boolean} True if valid format
