@@ -137,6 +137,7 @@ class UiTranslationService {
         // Backup current version before updating
         try {
             const existingDoc = await uiTranslationRepository.findByProjectAndLocale(projectID, locale);
+
             if (existingDoc) {
                 await uiTranslationRepository.backup(projectID, locale);
                 logger.info('Translation document backed up before merge update', { projectID, locale });
@@ -227,6 +228,7 @@ class UiTranslationService {
         // Backup current version before updating
         try {
             const existingDoc = await uiTranslationRepository.findByProjectAndLocale(projectID, locale);
+
             if (existingDoc) {
                 await uiTranslationRepository.backup(projectID, locale);
                 logger.info('Translation document backed up before section update', { projectID, locale });

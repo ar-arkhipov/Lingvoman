@@ -65,20 +65,26 @@ if (process.env.NODE_ENV !== 'production') {
                 // Add only essential metadata for development
                 if (meta.requestId) {
                     const shortId = meta.requestId.slice(-8);
+
                     output += ` [${shortId}]`;
                 }
+
                 if (meta.method && meta.url) {
                     output += ` ${meta.method} ${meta.url}`;
                 }
+
                 if (meta.statusCode) {
                     output += ` (${meta.statusCode})`;
                 }
+
                 if (meta.responseTime !== undefined) {
                     output += ` ${meta.responseTime}ms`;
                 }
+
                 if (meta.username) {
                     output += ` user:${meta.username}`;
                 }
+
                 if (meta.error && meta.error.message) {
                     output += ` - ${meta.error.message}`;
                 }
@@ -93,6 +99,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const requestLogger = (req, res, next) => {
     const requestId = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     req.requestId = requestId;
     
     // Skip logging for static files and favicon
@@ -107,6 +114,7 @@ const requestLogger = (req, res, next) => {
     });
 
     const originalSend = res.send;
+
     res.send = function(data) {
         const responseTime = Date.now() - req.startTime;
         

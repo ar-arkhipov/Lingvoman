@@ -5,7 +5,6 @@ node_modules/*
 package-lock.json
 .idea
 .kiro
-tests
 .DS_Store
 logs
 .aws-sam

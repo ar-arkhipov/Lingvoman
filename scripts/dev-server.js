@@ -14,6 +14,7 @@ process.env.PORT = process.env.PORT || '1337';
 
 // Load environment variables from .env file
 const envPath = path.join(__dirname, '..', '.env');
+
 if (fs.existsSync(envPath)) {
     require('dotenv').config({ path: envPath });
     console.log('✅ Loaded environment variables from .env');
@@ -23,11 +24,11 @@ if (fs.existsSync(envPath)) {
 
 // Validate required environment variables
 const requiredEnvVars = ['MONGO_URI', 'JWT_SECRET', 'OPENAI_API_KEY'];
-const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingVars.length > 0) {
     console.error('❌ Missing required environment variables:');
-    missingVars.forEach(varName => {
+    missingVars.forEach((varName) => {
         console.error(`   - ${varName}`);
     });
     console.error('\nPlease create a .env file with the required variables.');

@@ -40,7 +40,7 @@
     "lint": "eslint . --config eslint.config.js",
     "lint:fix": "eslint . --config eslint.config.js --fix",
     "deploy:dev": "sam build && sam deploy --config-env default",
-    "deploy:staging": "sam build && sam deploy --config-env staging",  
+    "deploy:staging": "sam build && sam deploy --config-env staging",
     "deploy:prod": "sam build && sam deploy --config-env prod",
     "deploy": "npm run deploy:dev",
     "deploy:guided": "sam build && sam deploy --guided",
@@ -53,7 +53,11 @@
     "logs:staging": "sam logs --stack-name lingvoman-staging -n LingvomanApi --tail",
     "logs:prod": "sam logs --stack-name lingvoman-prod -n LingvomanApi --tail",
     "sam:local": "sam local start-api --warm-containers EAGER",
-    "sam:invoke": "sam local invoke LingvomanApi --event events/api-event.json"
+    "sam:invoke": "sam local invoke LingvomanApi --event events/api-event.json",
+    "test": "NODE_ENV=test mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
+    "test:watch": "npm run test -- --watch",
+    "test:coverage": "NODE_ENV=test nyc --reporter=text --reporter=lcov mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
+    "coverage:check": "nyc check-coverage --lines 70 --branches 60 --functions 70 --statements 70"
   },
   "repository": {
     "type": "git",
@@ -62,9 +66,33 @@
   "author": "Tamango",
   "license": "MIT",
   "devDependencies": {
+    "chai": "^4.3.10",
     "eslint": "^9.31.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.1",
-    "prettier": "^3.6.2"
+    "mocha": "^10.7.3",
+    "mongodb-memory-server": "^10.1.4",
+    "nyc": "^17.1.0",
+    "prettier": "^3.6.2",
+    "supertest": "^7.0.0"
+  },
+  "nyc": {
+    "all": true,
+    "extension": [
+      ".js"
+    ],
+    "include": [
+      "src/**/*.js",
+      "libs/**/*.js"
+    ],
+    "exclude": [
+      "tests/**",
+      "public/**",
+      "scripts/**",
+      "events/**",
+      "lingvoman.js"
+    ],
+    "report-dir": "coverage",
+    "check-coverage": false
   }
 }
