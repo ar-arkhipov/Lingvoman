@@ -3,28 +3,96 @@
   "version": "1.0.0",
   "description": "Simple system to store, serve and redact translations for site",
   "main": "app.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "dependencies": {
-    "body-parser": "^1.13.1",
-    "express": "^4.13.0",
-    "gulp": "^3.9.0",
-    "gulp-concat": "^2.6.0",
-    "gulp-ng-annotate": "^1.0.0",
-    "gulp-uglify": "^1.2.0",
-    "jwt-simple": "^0.3.0",
-    "method-override": "^2.3.3",
-    "mongoose": "~5.2.4",
-    "morgan": "^1.6.0",
-    "nconf": "^0.7.1",
-    "winston": "^1.0.1"
+    "@vendia/serverless-express": "^4.12.6",
+    "cors": "^2.8.5",
+    "dotenv": "17.2.0",
+    "express": "4.21.2",
+    "express-rate-limit": "^8.0.1",
+    "express-validator": "^7.2.1",
+    "gulp": "5.0.1",
+    "gulp-concat": "2.6.1",
+    "gulp-ng-annotate": "^0.2.0",
+    "gulp-uglify": "3.0.2",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "9.0.2",
+    "method-override": "3.0.0",
+    "mongoose": "8.12.0",
+    "morgan": "1.10.0",
+    "nconf": "0.12.1",
+    "openai": "^5.10.2",
+    "winston": "^3.17.0"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node lingvoman.js"
+    "start": "node lingvoman.js",
+    "start:dev": "NODE_ENV=development node -r dotenv/config lingvoman.js",
+    "start:prod": "NODE_ENV=production node lingvoman.js",
+    "build": "cd public && npx gulp js",
+    "build:watch": "cd public && npx gulp watch",
+    "dev": "npm run build && npm run start:dev",
+    "dev:server": "node scripts/dev-server.js",
+    "dev:watch": "npm run build:watch & npm run dev:server",
+    "prod": "npm run build && npm run start:prod",
+    "lint": "eslint . --config eslint.config.js",
+    "lint:fix": "eslint . --config eslint.config.js --fix",
+    "deploy:dev": "sam build && sam deploy --config-env default",
+    "deploy:staging": "sam build && sam deploy --config-env staging",
+    "deploy:prod": "sam build && sam deploy --config-env prod",
+    "deploy": "npm run deploy:dev",
+    "deploy:guided": "sam build && sam deploy --guided",
+    "remove": "sam delete",
+    "remove:dev": "sam delete --config-env default",
+    "remove:staging": "sam delete --config-env staging",
+    "remove:prod": "sam delete --config-env prod",
+    "logs": "sam logs -n LingvomanApi --tail",
+    "logs:dev": "sam logs --stack-name lingvoman-dev -n LingvomanApi --tail",
+    "logs:staging": "sam logs --stack-name lingvoman-staging -n LingvomanApi --tail",
+    "logs:prod": "sam logs --stack-name lingvoman-prod -n LingvomanApi --tail",
+    "sam:local": "sam local start-api --warm-containers EAGER",
+    "sam:invoke": "sam local invoke LingvomanApi --event events/api-event.json",
+    "test": "NODE_ENV=test ENABLE_LOGS=false mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
+    "test:watch": "npm run test -- --watch",
+    "test:coverage": "NODE_ENV=test ENABLE_LOGS=false nyc --reporter=text --reporter=lcov mocha \"tests/**/*.spec.js\" --timeout 30000 --file tests/setup/global.js --exit",
+    "coverage:check": "nyc check-coverage --lines 70 --branches 60 --functions 70 --statements 70"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Tamango92/Lingvoman.git"
   },
   "author": "Tamango",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.3.10",
+    "eslint": "^9.31.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-prettier": "^5.5.1",
+    "mocha": "^10.7.3",
+    "mongodb-memory-server": "^10.1.4",
+    "nyc": "^17.1.0",
+    "prettier": "^3.6.2",
+    "supertest": "^7.0.0"
+  },
+  "nyc": {
+    "all": true,
+    "extension": [
+      ".js"
+    ],
+    "include": [
+      "src/**/*.js",
+      "libs/**/*.js"
+    ],
+    "exclude": [
+      "tests/**",
+      "public/**",
+      "scripts/**",
+      "events/**",
+      "lingvoman.js"
+    ],
+    "report-dir": "coverage",
+    "check-coverage": false
+  }
 }

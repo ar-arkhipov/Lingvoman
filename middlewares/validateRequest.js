@@ -1,47 +1,60 @@
-var config = require('../libs/config');
-var jwt = require('jwt-simple');
+const config = require('../libs/config');
+const jwt = require('jsonwebtoken');
 
 module.exports = function(req, res, next) {
-  var token = (req.headers['x-access-token']);
+  // Allow common languages endpoint to be public (with or without query parameters)
+  if (req.url.startsWith('/api/uitranslate/common-languages')) {
+    return next();
+  }
+
+  // Allow sync progress endpoint to be public for polling
+  if (req.url.startsWith('/api/uitranslate/sync-progress/')) {
+    return next();
+  }
+
+  const token = (req.headers['x-access-token']);
+
   if (token) {
     try {
-      var decoded = jwt.decode(token, config['jwtSecret']);
-      var dUser = decoded.user;
+      const decoded = jwt.verify(token, config['jwtSecret']);
+      const dUser = decoded.user;
 
-      if (decoded.exp <= Date.now()) {
+      if (decoded.exp <= Date.now() / 1000) {
         res.status(400);
         res.json({
-          "status": 400,
-          "message": "Token Expired"
+          'status': 400,
+          'message': 'Token Expired'
         });
       }
+
       if (dUser) {
-        var role = dUser.role;
-        var query = req.url;
+        const role = dUser.role;
+        const query = req.url;
+
         if (checkRights(query, role)) {
           next(); // To move to next middleware
         } else {
           res.status(403);
           res.json({
-            "status": 403,
-            "message": "Forbidden"
+            'status': 403,
+            'message': 'Forbidden'
           });
         }
       }
     } catch (err) {
       res.status(401);
       res.json({
-        "status": 401,
-        "message": "Invalid user",
-        "error": err
+        'status': 401,
+        'message': 'Invalid user',
+        'error': err
       });
       console.log(err);
     }
   } else {
     res.status(401);
     res.json({
-      "status": 401,
-      "message": "Unauthorized"
+      'status': 401,
+      'message': 'Unauthorized'
     });
   }
 

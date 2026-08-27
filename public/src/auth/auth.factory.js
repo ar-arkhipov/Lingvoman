@@ -1,4 +1,5 @@
 'use strict';
+
 (function() {
     angular
         .module('app')
@@ -12,7 +13,9 @@
                 return !!$window.sessionStorage.token;
             }())
         };
+
         console.log(auth);
+
         return auth;
     }
 
@@ -20,23 +23,28 @@
         .module('app')
         .factory('UserAuthFactory', UserAuthFactory);
 
-    UserAuthFactory.$inject = ['$window', '$resource', 'Auth'];
+    UserAuthFactory.$inject = ['$window', '$resource', 'Auth', 'APP_CONFIG'];
 
-    function UserAuthFactory($window, $resource, Auth) {
+    function UserAuthFactory($window, $resource, Auth, APP_CONFIG) {
         return {
-            login: function (username, password) {
-                var loginRes = $resource('/login');
+            login: function(username, password) {
+                var loginRes = $resource(APP_CONFIG.getBaseUrl() + '/login', {}, {
+                    save: {
+                        method: 'POST'
+                    }
+                });
+
                 return loginRes.save({
                     username: username,
                     password: password
                 });
             },
 
-            logout: function () {
+            logout: function() {
                 if (Auth.isLogged) {
                     delete $window.sessionStorage.token;
                 }
             }
-        }
+        };
     }
 })();

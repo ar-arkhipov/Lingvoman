@@ -1,0 +1,73 @@
+/* Ensure modals and backdrops are above other content */
+.modal {
+  z-index: 1050;
+}
+
+.modal-backdrop {
+  z-index: 1040;
+}
+
+/* Proper Bootstrap modal scrolling */
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.modal-dialog {
+  margin: 30px auto;
+  max-height: calc(100vh - 60px);
+}
+
+.modal-content {
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  flex-shrink: 0;
+}
+
+.modal-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.modal-footer {
+  flex-shrink: 0;
+}
+
+/* Custom styles for Lingvoman */
+
+/* Spinning animation for sync button */
+.glyphicon-refresh-animate {
+    -webkit-animation: spin 1s infinite linear;
+    -moz-animation: spin 1s infinite linear;
+    -o-animation: spin 1s infinite linear;
+    animation: spin 1s infinite linear;
+}
+
+@-webkit-keyframes spin {
+    from { -webkit-transform: rotate(0deg); }
+    to { -webkit-transform: rotate(360deg); }
+}
+
+@-moz-keyframes spin {
+    from { -moz-transform: rotate(0deg); }
+    to { -moz-transform: rotate(360deg); }
+}
+
+@-o-keyframes spin {
+    from { -o-transform: rotate(0deg); }
+    to { -o-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+} 

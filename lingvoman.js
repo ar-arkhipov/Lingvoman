@@ -1,32 +1,5 @@
-//Dependencies
-var config = require('./libs/config.js');
-var express         = require('express');
-var bodyParser = require('body-parser');
-var methodOverride = require('method-override');
-var morgan = require('morgan');
-var path            = require('path');
+// Import the new server setup
+const { startServer } = require('./src/server');
 
-var app = express();
-
-
-app.use(morgan('dev')); //logger
-app.use(bodyParser());  //parsing of post request body
-app.use(methodOverride()); //adding understanding of put, delete etc. methods
-app.use(express.static(path.join(__dirname, "public"))); //static files serve
-
-//allow cross-domain requests
-app.all('*', function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "X-Requested-With, Content-Type");
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-  next();
- });
-
-app.all('/api/*', [require('./middlewares/validateRequest')]);
-
-app.use('/', require('./routes'));
-
-//start server
-app.listen(config['port'], function(){
-    console.log('Express server listening on port ' + config['port']);
-});
+// Start the server
+startServer();

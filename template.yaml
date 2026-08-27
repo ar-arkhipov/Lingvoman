@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lingvoman Translation Management System
+
+Globals:
+  Function:
+    Timeout: 900  # 15 minutes for translation sync jobs
+    MemorySize: 1024
+    Runtime: nodejs22.x
+    Environment:
+      Variables:
+        NODE_ENV: !Ref Stage
+        MONGO_URI: !Ref MongoUri
+        JWT_SECRET: !Ref JwtSecret
+        OPENAI_API_KEY: !Ref OpenAiApiKey
+        OPENAI_MODEL: !Ref OpenAiModel
+        LOG_LEVEL: !Ref LogLevel
+
+Parameters:
+  Stage:
+    Type: String
+    Default: dev
+    Description: Deployment stage
+  
+  MongoUri:
+    Type: String
+    Description: MongoDB connection string
+    NoEcho: true
+  
+  JwtSecret:
+    Type: String
+    Description: JWT signing secret (at least 32 characters)
+    NoEcho: true
+    MinLength: 32
+  
+  OpenAiApiKey:
+    Type: String
+    Description: OpenAI API key
+    NoEcho: true
+  
+  OpenAiModel:
+    Type: String
+    Default: gpt-4o-mini
+    Description: OpenAI model to use
+  
+  LogLevel:
+    Type: String
+    Default: info
+    Description: Logging level
+    AllowedValues:
+      - debug
+      - info
+      - warn
+      - error
+
+Resources:
+  # Lambda Function
+  LingvomanApi:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub lingvoman-api-${Stage}
+      CodeUri: ./
+      Handler: src/lambda.handler
+      Environment:
+        Variables:
+          NODE_ENV: !Ref Stage
+          MONGO_URI: !Ref MongoUri
+          JWT_SECRET: !Ref JwtSecret
+          OPENAI_API_KEY: !Ref OpenAiApiKey
+          OPENAI_MODEL: !Ref OpenAiModel
+          LOG_LEVEL: !Ref LogLevel
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            RestApiId: !Ref LingvomanApiGateway
+        RootEvent:
+          Type: Api
+          Properties:
+            Path: /
+            Method: ANY
+            RestApiId: !Ref LingvomanApiGateway
+
+  # API Gateway
+  LingvomanApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: !Ref Stage
+      Cors:
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,x-access-token,x-request-id'"
+        AllowOrigin: "'*'"
+        AllowCredentials: "'true'"
+
+  # S3 Bucket for Frontend
+  LingvomanFrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub lingvoman-frontend-${Stage}
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+
+  # S3 Bucket Policy for Public Read Access
+  LingvomanFrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LingvomanFrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub '${LingvomanFrontendBucket}/*'
+
+  # IAM Role for Lambda
+  LingvomanLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: LingvomanLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub '${LingvomanFrontendBucket}/*'
+
+Outputs:
+  ApiGatewayUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub 'https://${LingvomanApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiGatewayUrl'
+  
+  FrontendBucketName:
+    Description: S3 bucket name for frontend
+    Value: !Ref LingvomanFrontendBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-FrontendBucketName'
+  
+  FrontendWebsiteUrl:
+    Description: S3 website URL
+    Value: !Sub 'http://${LingvomanFrontendBucket}.s3-website-${AWS::Region}.amazonaws.com'
+    Export:
+      Name: !Sub '${AWS::StackName}-FrontendWebsiteUrl'
+  
+  LambdaFunctionName:
+    Description: Lambda function name
+    Value: !Ref LingvomanApi
+    Export:
+      Name: !Sub '${AWS::StackName}-LambdaFunctionName' 

@@ -12,45 +12,64 @@
                     <div class="input-group">
                         <div class="input-group-btn">
                             <!--dropdown button -->
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
                                 Project <span class="caret"></span>
                             </button>
                             <!-- dropdawn btn LIST -->
                             <ul class="dropdown-menu">
-                                <li ng-repeat="project in uiTranslatesCtrl.initList" >
+                                <li ng-repeat="project in uiTranslatesCtrl.initList">
                                     <a href="#" ng-click="uiTranslatesCtrl.chooseProject(project)">
                                         {{project.projectAlphaId}} - {{project.projectID}}
                                     </a>
                                 </li>
                             </ul>
                         </div>
-                        <input type="text" class="form-control" placeholder="Project ID" ng-model="uiTranslatesCtrl.id" ng-required="true">
+                        <input type="text" class="form-control" placeholder="Project ID" ng-model="uiTranslatesCtrl.id"
+                               ng-required="true">
                     </div>
                     <!--locale input group -->
                     <div class="input-group">
                         <div class="input-group-btn">
                             <!--dropdown button -->
-                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown"
+                                    aria-haspopup="true" aria-expanded="false">
                                 Language <span class="caret"></span>
                             </button>
                             <!-- dropdown btn LIST -->
                             <ul class="dropdown-menu">
-                                <li ng-repeat="locale in uiTranslatesCtrl.chosen.locales" ng-click="uiTranslatesCtrl.locale = locale">
+                                <li ng-repeat="locale in uiTranslatesCtrl.chosen.locales"
+                                    ng-click="uiTranslatesCtrl.locale = locale">
                                     <a href="#">
                                         {{locale}}
                                     </a>
                                 </li>
                             </ul>
                         </div>
-                        <input type="text" class="form-control" placeholder="Locale" ng-model="uiTranslatesCtrl.locale" ng-required="true">
+                        <input type="text" class="form-control" placeholder="Locale" ng-model="uiTranslatesCtrl.locale"
+                               ng-required="true">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" ng-click="uiTranslatesCtrl.getTrans()">Open</button>
-                <button type="submit" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document</button>
+                <button type="button" class="btn btn-warning" ng-click="uiTranslatesCtrl.makeNew()">Create document
+                </button>
+                <button ng-if="uiTranslatesCtrl.data.length > 0 && uiTranslatesCtrl.canAddLanguage()" type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.openAddLanguageModal()"
+                        ng-show="uiTranslatesCtrl.chosen">
+                    <i class="glyphicon glyphicon-plus" style="margin-right: 5px;"></i>Add Language
+                </button>
+                <button ng-if="uiTranslatesCtrl.data.length > 0 && uiTranslatesCtrl.chosen && uiTranslatesCtrl.chosen.locales && uiTranslatesCtrl.chosen.locales.length > 1"
+                        type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.openSyncModal()"
+                        ng-show="uiTranslatesCtrl.chosen">
+                    <i class="glyphicon glyphicon-globe" style="margin-right: 5px;"></i>Sync to Other Languages
+                </button>
+                <span ng-if="uiTranslatesCtrl.data.length > 0 && uiTranslatesCtrl.chosen && uiTranslatesCtrl.chosen.locales && uiTranslatesCtrl.chosen.locales.length <= 1"
+                      class="text-muted" style="margin-left: 10px;">
+                    Add another language to enable sync
+                </span>
             </form>
 
             <form class="navbar-form pull-right">
-                <button type="submit" class="btn btn-info" ng-click="uiTranslatesCtrl.checkCopies()">Backup</button>
+                <button type="button" class="btn btn-info" ng-click="uiTranslatesCtrl.checkCopies()">Backup</button>
             </form>
         </div>
     </nav>
@@ -66,9 +85,39 @@
             <div class="panel-body">
                 Recover -
                 <button type="button" class="btn btn-info" style="margin: 0 4px;" ng-repeat="locale in copy.locales"
-                        ng-click="uiTranslatesCtrl.restore(copy.projectID, locale)">{{locale}}</button>
+                        ng-click="uiTranslatesCtrl.restore(copy.projectID, locale)">{{locale}}
+                </button>
             </div>
         </div>
+    </div>
+
+    <!-- sync results -->
+    <div class="alert alert-success"
+         ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'success'">
+        <button type="button" class="close" ng-click="uiTranslatesCtrl.syncResult = null">&times;</button>
+        <h4>Sync Successful!</h4>
+        <p>{{uiTranslatesCtrl.syncResult.message}}</p>
+        <div ng-if="uiTranslatesCtrl.syncResult.data.translatedSections.length">
+            <strong>Translated sections:</strong>
+            <span class="label label-success"
+                  ng-repeat="section in uiTranslatesCtrl.syncResult.data.translatedSections">{{section}}</span>
+        </div>
+        <div ng-if="uiTranslatesCtrl.syncResult.data.skippedSections.length">
+            <strong>Already translated:</strong>
+            <span class="label label-info" ng-repeat="section in uiTranslatesCtrl.syncResult.data.skippedSections">{{section}}</span>
+        </div>
+        <div ng-if="uiTranslatesCtrl.syncResult.data.removedExtraKeys > 0">
+            <strong>Removed extra keys:</strong>
+            <span class="label label-danger">{{uiTranslatesCtrl.syncResult.data.removedExtraKeys}} keys removed</span>
+        </div>
+    </div>
+
+    <div class="alert alert-danger"
+         ng-if="uiTranslatesCtrl.syncResult && uiTranslatesCtrl.syncResult.status === 'error'">
+        <button type="button" class="close" ng-click="uiTranslatesCtrl.syncResult = null">&times;</button>
+        <h4>Sync Failed!</h4>
+        <p>{{uiTranslatesCtrl.syncResult.message}}</p>
+        <p ng-if="uiTranslatesCtrl.syncResult.error"><small>Error: {{uiTranslatesCtrl.syncResult.error}}</small></p>
     </div>
 
     <!-- MAIN CONTAINER -->
@@ -79,34 +128,42 @@
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h3 class="panel-title">
-                            ID: {{item.projectID}} - {{item.projectAlphaId}} <span class="label label-info" >{{item.locale}}</span>
-                            <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.removeDoc(item)">DELETE</button>
+                            ID: {{item.projectID}} - {{item.projectAlphaId}} <span class="label label-info">{{item.locale}}</span>
+                            <button type="button" class="btn btn-danger btn-xs pull-right"
+                                    ng-click="uiTranslatesCtrl.removeDoc(item)">DELETE
+                            </button>
                         </h3>
                     </div>
                     <div class="panel-body">
-                        <button type="button" class="btn btn-success btn-xs" ng-click="uiTranslatesCtrl.changeTranslation(item)">Save</button>
+                        <button type="button" class="btn btn-success btn-xs"
+                                ng-click="uiTranslatesCtrl.changeTranslation(item)">Save
+                        </button>
                         <button type="button" class="btn btn-warning btn-xs" ng-click="uiTranslatesCtrl.makeCopy(item)"
-                                ng-if="uiTranslatesCtrl.data.length < 2">Take as template</button>
+                                ng-if="uiTranslatesCtrl.data.length < 2">Take as template
+                        </button>
                     </div>
                 </div>
 
                 <div ng-repeat="(key, value) in item.translations" class="container-fluid well">
 
                     <h4>Group:
-                        <span class="label label-default" >{{key}}</span>
-                        <button type="button" class="btn btn-danger btn-xs pull-right" ng-click="uiTranslatesCtrl.deleteGroup(item.translations, key)"
-                                ng-if="uiTranslatesCtrl.data.length < 2">Delete group</button>
+                        <span class="label label-default">{{key}}</span>
+                        <button type="button" class="btn btn-danger btn-xs pull-right"
+                                ng-click="uiTranslatesCtrl.deleteGroup(item.translations, key)"
+                                ng-if="uiTranslatesCtrl.data.length < 2">Delete group
+                        </button>
                     </h4>
 
                     <div class="input-group" ng-repeat="(def, trans) in value" style="margin:10px 0;">
                         <span class="input-group-addon" id="basic-addon1">{{def}}</span>
                         <input type="text" class="form-control" placeholder="" aria-describedby="basic-addon1"
                                value="{{trans}}" ng-model="item.translations[key][def]">
-                <span class="input-group-btn">
+                        <span class="input-group-btn">
                     <button class="btn btn-default" type="button" ng-click="" ng-if="trans.length > 45">
                         <span class="glyphicon glyphicon-modal-window"></span>
                     </button>
-                    <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.deleteField(item.translations, key, def)"
+                    <button class="btn btn-default" type="button"
+                            ng-click="uiTranslatesCtrl.deleteField(item.translations, key, def)"
                             title="Remove field" ng-if="uiTranslatesCtrl.data.length < 2" tabindex="-1">
                         <span class="glyphicon glyphicon-remove"></span>
                     </button>
@@ -114,18 +171,22 @@
                     </div>
 
                     <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
-                        <input type="text" class="form-control" placeholder="Add new field to the group" aria-describedby="basic-addon1" ng-model="newField">
-                <span class="input-group-btn">
-                  <button class="btn btn-default" type="submit" ng-click="uiTranslatesCtrl.addField(item.translations, key, newField); newField=null;"
+                        <input type="text" class="form-control" placeholder="Add new field to the group"
+                               aria-describedby="basic-addon1" ng-model="newField">
+                        <span class="input-group-btn">
+                  <button class="btn btn-default" type="submit"
+                          ng-click="uiTranslatesCtrl.addField(item.translations, key, newField); newField=null;"
                           title="Add field"><span class="glyphicon glyphicon-plus"></span></button>
                 </span>
                     </div>
                 </div>
 
                 <div class="input-group col-md-7" ng-if="uiTranslatesCtrl.data.length < 2">
-                    <input type="text" class="form-control" placeholder="Create group" aria-describedby="basic-addon1" ng-model="newGroup">
-                <span class="input-group-btn">
-                  <button class="btn btn-default" type="button" ng-click="uiTranslatesCtrl.addGroup(item.translations, newGroup)"
+                    <input type="text" class="form-control" placeholder="Create group" aria-describedby="basic-addon1"
+                           ng-model="newGroup">
+                    <span class="input-group-btn">
+                  <button class="btn btn-default" type="button"
+                          ng-click="uiTranslatesCtrl.addGroup(item.translations, newGroup)"
                           title="Create group"><span class="glyphicon glyphicon-plus"></span></button>
                 </span>
                 </div>
@@ -138,4 +199,433 @@
             {{growl.msg}}
         </alert>
     </div>
+
+    <!-- FLEXIBLE SYNC MODAL -->
+    <div class="modal fade" tabindex="-1" role="dialog" ng-class="{'in': uiTranslatesCtrl.showSyncModal}" 
+         ng-style="{'display': uiTranslatesCtrl.showSyncModal ? 'block' : 'none'}" 
+         ng-click="uiTranslatesCtrl.closeSyncModal()">
+        <div class="modal-dialog modal-lg" role="document" ng-click="$event.stopPropagation()">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" ng-click="uiTranslatesCtrl.closeSyncModal()" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <i class="glyphicon glyphicon-globe"></i> Sync to Other Languages
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID:
+                                    {{uiTranslatesCtrl.chosen.projectID}})</p>
+                            </div>
+                        </div>
+
+                        <!-- Available Languages List -->
+                        <div class="row" ng-if="uiTranslatesCtrl.unsyncedInfo">
+                            <div class="col-md-12">
+                                <h5>Available Languages</h5>
+
+                                <!-- Languages with missing translations -->
+                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages"
+                                     ng-if="langInfo.needsSync || langInfo.syncProgress < 100" class="panel"
+                                     ng-class="{'panel-warning': langInfo.needsSync, 'panel-success': !langInfo.needsSync && langInfo.syncProgress === 100}">
+                                    <div class="panel-heading"
+                                         style="cursor: pointer; display: flex; align-items: center; justify-content: space-between;"
+                                         ng-click="langInfo.expanded = !langInfo.expanded">
+                                        <div style="display: flex; align-items: center; flex-grow: 1;">
+
+                                            <i class="glyphicon"
+                                               ng-class="{'glyphicon-chevron-down': langInfo.expanded, 'glyphicon-chevron-right': !langInfo.expanded}"
+                                               style="margin-right: 8px;"></i>
+                                            <strong>{{locale | uppercase}}</strong>
+                                            <span class="badge badge-warning" style="margin-left: 10px;" ng-if="langInfo.totalMissingKeys > 0">{{langInfo.totalMissingKeys}} missing</span>
+                                            <span class="badge badge-danger" style="margin-left: 5px;" ng-if="langInfo.totalExtraKeys > 0">{{langInfo.totalExtraKeys}} extra</span>
+                                            <span class="badge badge-primary" style="margin-left: 5px;" ng-if="langInfo.totalChangedKeys > 0">{{langInfo.totalChangedKeys}} changed</span>
+
+                                            <div class="progress"
+                                                 style="width: 200px; margin-left: 15px; margin-bottom: 0;">
+                                                <div class="progress-bar"
+                                                     ng-class="{'progress-bar-warning': langInfo.needsSync && langInfo.syncProgress < 100, 'progress-bar-success': !langInfo.needsSync && langInfo.syncProgress === 100}"
+                                                     ng-style="{width: langInfo.syncProgress + '%'}">
+                                                    {{langInfo.syncProgress}}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                                ng-click="uiTranslatesCtrl.syncLanguage(locale, $event)"
+                                                ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !langInfo.needsSync"
+                                                style="margin-left: 15px;">
+                                            <i class="glyphicon glyphicon-refresh"
+                                               ng-class="{'glyphicon-refresh-animate': uiTranslatesCtrl.syncingLanguages[locale]}"
+                                               style="margin-right: 5px;"></i><span
+                                                ng-if="!uiTranslatesCtrl.syncingLanguages[locale]">Sync</span><span
+                                                ng-if="uiTranslatesCtrl.syncingLanguages[locale]">Syncing...</span>
+                                        </button>
+                                    </div>
+
+                                        <!-- Collapsible content showing missing sections -->
+                                    <div class="panel-body" ng-hide="!langInfo.expanded">
+
+                                        <div ng-if="langInfo.expanded && langInfo.missingSections && langInfo.missingSections.length > 0" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Missing Keys</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="section in langInfo.missingSections" style="border-left: 4px solid #28a745;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{section}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{langInfo.missingKeys[section].length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{langInfo.missingKeys[section].join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div ng-if="langInfo.expanded && langInfo.extraSections && langInfo.extraSections.length > 0" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Extra Keys</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="section in langInfo.extraSections" style="border-left: 4px solid #dc3545;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{section}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{langInfo.extraKeys[section].length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{langInfo.extraKeys[section].join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div ng-if="langInfo.extraKeys && Object.keys(langInfo.extraKeys).length > (langInfo.extraSections ? langInfo.extraSections.length : 0)" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <div class="panel-heading" style="background-color: #f8f9fa; border-color: #dee2e6;">
+                                                    <h6 style="margin: 0; color: #6c757d;">
+                                                        <i class="glyphicon glyphicon-trash" style="margin-right: 8px; color: #dc3545;"></i>
+                                                        Extra Keys to Remove
+                                                    </h6>
+                                                </div>
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Keys to Remove</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="(sectionKey, extraKeys) in langInfo.extraKeys"
+                                                                    ng-if="!langInfo.extraSections || langInfo.extraSections.indexOf(sectionKey) === -1"
+                                                                    style="border-left: 4px solid #dc3545;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{sectionKey}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{extraKeys.length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{extraKeys.join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Changed keys table -->
+                                        <div ng-if="langInfo.expanded && langInfo.totalChangedKeys > 0" style="margin-top: 20px;">
+                                            <div class="panel panel-default">
+                                                <div class="panel-body" style="padding: 0;">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover" style="margin-bottom: 0;">
+                                                            <thead style="background-color: #f8f9fa;">
+                                                                <tr>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 40%;">Section</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600; width: 20%;">Keys Count</th>
+                                                                    <th style="border-top: none; color: #6c757d; font-weight: 600;">Changed Keys</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <tr ng-repeat="(sectionKey, keys) in langInfo.changedKeys" style="border-left: 4px solid #007bff;">
+                                                                    <td style="vertical-align: middle;">
+                                                                        <strong style="color: #495057;">{{sectionKey}}</strong>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <span class="badge" style="background-color: #6c757d; color: white; font-size: 11px;">
+                                                                            {{keys.length}} keys
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style="vertical-align: middle;">
+                                                                        <small style="color: #6c757d; font-family: 'Courier New', monospace;">
+                                                                            {{keys.join(', ')}}
+                                                                        </small>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div ng-if="(!langInfo.missingSections || langInfo.missingSections.length === 0) && (!langInfo.missingKeys || Object.keys(langInfo.missingKeys).length === 0) && (!langInfo.extraSections || langInfo.extraSections.length === 0) && (!langInfo.extraKeys || Object.keys(langInfo.extraKeys).length === 0) && (!langInfo.totalChangedKeys || langInfo.totalChangedKeys === 0)">
+                                            <div class="alert alert-warning">
+                                                No sync differences found, but totalMissingKeys is {{langInfo.totalMissingKeys}} and totalExtraKeys is {{langInfo.totalExtraKeys || 0}} and totalChangedKeys is {{langInfo.totalChangedKeys || 0}}.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Languages that are up to date -->
+                                <div ng-repeat="(locale, langInfo) in uiTranslatesCtrl.unsyncedInfo.targetLanguages"
+                                     ng-if="!langInfo.needsSync" class="panel panel-success">
+                                    <div class="panel-heading" style="display: flex; align-items: center;">
+                                        <!-- Left: locale info -->
+                                        <div style="display: flex; align-items: center;">
+                                            <i class="glyphicon glyphicon-ok" style="margin-right: 8px;"></i>
+                                            <strong>{{locale | uppercase}}</strong>
+                                            <span class="badge badge-success" style="margin-left: 10px;">Up to date</span>
+                                        </div>
+                                        <!-- Center: progress bar -->
+                                        <div style="flex: 1; display: flex; justify-content: center;">
+                                            <div class="progress" style="width: 200px; margin: 0;">
+                                                <div class="progress-bar progress-bar-success text-center" style="width: 100%;">
+                                                    100%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Right spacer for symmetry -->
+                                        <div style="width: 1px;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Show message if no other languages -->
+                                <div ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0 && uiTranslatesCtrl.unsyncedInfo.targetLanguages && Object.keys(uiTranslatesCtrl.unsyncedInfo.targetLanguages).length === 0"
+                                     class="alert alert-info">
+                                    <i class="glyphicon glyphicon-info-sign"></i>
+                                    This project only has the source language
+                                    ({{uiTranslatesCtrl.unsyncedInfo.sourceLocale | uppercase}}).
+                                    Create translations in other languages first.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div ng-if="!uiTranslatesCtrl.unsyncedInfo" class="text-center">
+                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Loading project
+                            languages...
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div ng-if="uiTranslatesCtrl.flexibleSyncInProgress">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h4 style="margin-bottom: 20px;">
+                                    <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"
+                                       style="margin-right: 8px;"></i>
+                                    Translating to <strong>{{uiTranslatesCtrl.getLanguageName(uiTranslatesCtrl.currentTargetLocale)}}</strong>
+                                </h4>
+
+                                <div class="progress" style="height: 25px; margin-bottom: 15px;">
+                                    <div class="progress-bar progress-bar-info progress-bar-striped active"
+                                         role="progressbar"
+                                         ng-style="{width: uiTranslatesCtrl.syncProgress + '%'}"
+                                         style="line-height: 25px; font-weight: bold; min-width: 40px;">
+                                        <span ng-if="uiTranslatesCtrl.syncProgress > 0">{{uiTranslatesCtrl.syncProgress}}%</span>
+                                        <span ng-if="uiTranslatesCtrl.syncProgress === 0">0%</span>
+                                    </div>
+                                </div>
+
+                                <div class="panel panel-info">
+                                    <div class="panel-body">
+                                        <div ng-if="uiTranslatesCtrl.currentSectionName" style="margin-bottom: 10px;">
+                                            <strong>Current Section:</strong>
+                                            <span class="label label-primary">{{uiTranslatesCtrl.currentSectionName}}</span>
+                                        </div>
+
+                                        <div ng-if="uiTranslatesCtrl.sectionProgress" style="margin-bottom: 10px;">
+                                            <strong>Progress:</strong> {{uiTranslatesCtrl.sectionProgress}}
+                                        </div>
+
+                                        <div>
+                                            <strong>Status:</strong> {{uiTranslatesCtrl.syncMessage}}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div ng-if="uiTranslatesCtrl.currentJobId" class="small text-muted"
+                                     style="text-align: center;">
+                                    Job ID: {{uiTranslatesCtrl.currentJobId}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeSyncModal()"
+                            ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress">
+                        <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">Close</span>
+                        <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">Hide</span>
+                    </button>
+                    <!-- <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.syncAllLanguages()"
+                            ng-disabled="uiTranslatesCtrl.flexibleSyncInProgress || !uiTranslatesCtrl.unsyncedInfo || uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length === 0"
+                            ng-if="uiTranslatesCtrl.unsyncedInfo && uiTranslatesCtrl.unsyncedInfo.unsyncedLanguages.length > 0">
+                        <span ng-if="!uiTranslatesCtrl.flexibleSyncInProgress">
+                            <i class="glyphicon glyphicon-refresh"></i> Sync All Languages
+                        </span>
+                        <span ng-if="uiTranslatesCtrl.flexibleSyncInProgress">
+                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Syncing All...
+                        </span>
+                    </button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADD LANGUAGE MODAL -->
+    <div class="modal fade" tabindex="-1" role="dialog" ng-class="{'in': uiTranslatesCtrl.isAddLanguageModalVisible()}" 
+         ng-style="{'display': uiTranslatesCtrl.isAddLanguageModalVisible() ? 'block' : 'none'}" 
+         ng-click="uiTranslatesCtrl.closeAddLanguageModal()">
+        <div class="modal-dialog modal-lg" role="document" ng-click="$event.stopPropagation()">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" ng-click="uiTranslatesCtrl.closeAddLanguageModal()"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">
+                        <i class="glyphicon glyphicon-plus"></i> Add Language to Project
+                    </h4>
+                </div>
+                <div class="modal-body">
+                    <div ng-if="!uiTranslatesCtrl.addingLanguage">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <p><strong>Project:</strong> {{uiTranslatesCtrl.chosen.projectAlphaId}} (ID:
+                                    {{uiTranslatesCtrl.chosen.projectID}})</p>
+                                <p><strong>Current Languages:</strong>
+                                    <span class="label label-info" style="margin-right: 5px;"
+                                          ng-repeat="locale in uiTranslatesCtrl.chosen.locales">
+                                        {{locale | uppercase}}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <h5>Select Language to Add:</h5>
+                                <div ng-if="uiTranslatesCtrl.availableLanguages.length > 0" class="form-group">
+                                    <select class="form-control" ng-model="uiTranslatesCtrl.selectedLanguage"
+                                            ng-options="lang as (lang.name + ' (' + lang.nativeName + ') - ' + lang.code) for lang in uiTranslatesCtrl.availableLanguages track by lang.code">
+                                        <option value="">-- Select a language --</option>
+                                    </select>
+                                </div>
+
+                                <div ng-if="uiTranslatesCtrl.availableLanguages.length === 0" class="alert alert-info">
+                                    <i class="glyphicon glyphicon-info-sign"></i>
+                                    All common languages have already been added to this project.
+                                </div>
+
+                                <div ng-if="uiTranslatesCtrl.selectedLanguage" class="alert alert-success">
+                                    <strong>Selected:</strong> {{uiTranslatesCtrl.selectedLanguage.name}}
+                                    ({{uiTranslatesCtrl.selectedLanguage.nativeName}}) -
+                                    {{uiTranslatesCtrl.selectedLanguage.code}}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Section -->
+                    <div ng-if="uiTranslatesCtrl.addingLanguage">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <h5>Adding Language: <strong>{{uiTranslatesCtrl.selectedLanguage.name}}
+                                    ({{uiTranslatesCtrl.selectedLanguage.code}})</strong></h5>
+
+                                <div class="alert alert-info">
+                                    <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i>
+                                    Creating language document...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" ng-click="uiTranslatesCtrl.closeAddLanguageModal()"
+                            ng-disabled="uiTranslatesCtrl.addingLanguage">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-success" ng-click="uiTranslatesCtrl.addLanguageToProject()"
+                            ng-disabled="!uiTranslatesCtrl.selectedLanguage || uiTranslatesCtrl.addingLanguage"
+                            ng-if="uiTranslatesCtrl.availableLanguages.length > 0">
+                        <span ng-if="!uiTranslatesCtrl.addingLanguage">
+                            <i class="glyphicon glyphicon-plus"></i> Add Language
+                        </span>
+                        <span ng-if="uiTranslatesCtrl.addingLanguage">
+                            <i class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></i> Adding...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal backdrop -->
+    <div class="modal-backdrop fade" ng-class="{'in': uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()}"
+         ng-style="{'display': (uiTranslatesCtrl.showSyncModal || uiTranslatesCtrl.isAddLanguageModalVisible()) ? 'block' : 'none'}"></div>
 </div>
